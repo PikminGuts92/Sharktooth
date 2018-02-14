@@ -5,6 +5,8 @@ VisualStudioVersion = 15.0.27130.2027
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sharktooth", "Sharktooth\Sharktooth.csproj", "{126C07A9-BB01-47ED-8CB2-D9BB639EEE98}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mub2Midi", "Mub2Midi\Mub2Midi.csproj", "{FC4114DE-6690-4792-ADB9-62FC8651BA61}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{126C07A9-BB01-47ED-8CB2-D9BB639EEE98}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{126C07A9-BB01-47ED-8CB2-D9BB639EEE98}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{126C07A9-BB01-47ED-8CB2-D9BB639EEE98}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FC4114DE-6690-4792-ADB9-62FC8651BA61}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FC4114DE-6690-4792-ADB9-62FC8651BA61}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FC4114DE-6690-4792-ADB9-62FC8651BA61}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FC4114DE-6690-4792-ADB9-62FC8651BA61}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
