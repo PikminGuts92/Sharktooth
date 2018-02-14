@@ -12,6 +12,8 @@ namespace Mub2Midi
         static void Main(string[] args)
         {
             Mub mub = Mub.FromFile(args[0]);
+            MIDIExport mid = new MIDIExport(mub);
+            mid.Export(args[1]);
         }
     }
 }

@@ -44,6 +44,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AwesomeReader.cs" />
+    <Compile Include="MIDIExport.cs" />
     <Compile Include="Mub.cs" />
     <Compile Include="MubEntry.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
