@@ -57,8 +57,8 @@ namespace Sharktooth
 
             // Reads in strings
             ar.BaseStream.Seek(entrySize, SeekOrigin.Current);
-            byte[] blob = ar.ReadBytes(blobSize);
-            Dictionary<long, string> words = ParseBlob(blob, entrySize);
+            mub.StringBlob = ar.ReadBytes(blobSize);
+            Dictionary<long, string> words = ParseBlob(mub.StringBlob, entrySize);
             ar.BaseStream.Seek(startOffset, SeekOrigin.Begin);
 
             // Reads entries

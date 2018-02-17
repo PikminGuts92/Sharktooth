@@ -48,6 +48,9 @@
     <Compile Include="Mub.cs" />
     <Compile Include="MubEntry.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="XMK.cs" />
+    <Compile Include="XMKEvent.cs" />
+    <Compile Include="XMKTempo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
