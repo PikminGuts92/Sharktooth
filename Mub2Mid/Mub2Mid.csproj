@@ -6,8 +6,8 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{FC4114DE-6690-4792-ADB9-62FC8651BA61}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>Mub2Midi</RootNamespace>
-    <AssemblyName>Mub2Midi</AssemblyName>
+    <RootNamespace>Mub2Mid</RootNamespace>
+    <AssemblyName>Mub2Mid</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>

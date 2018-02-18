@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Sharktooth;
 
-namespace Mub2Midi
+namespace Mub2Mid
 {
     class Program
     {
