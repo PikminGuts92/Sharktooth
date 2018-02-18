@@ -8,7 +8,7 @@ using GameArchives.FSAR;
 
 namespace Sharktooth
 {
-    public class FarArchive
+    public class FarArchive : IDisposable
     {
         private string _archivePath;
         private FSARPackage _archive;
@@ -51,7 +51,12 @@ namespace Sharktooth
             ParseDirectory(_archive.RootDirectory);
             return files;
         }
-        
+
+        public void Dispose()
+        {
+            _archive.Dispose();
+        }
+
         public bool IsOpen => _archive != null;
     }
 }

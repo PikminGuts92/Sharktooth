@@ -9,6 +9,8 @@ namespace Sharktooth.Xmk
 {
     public class Xmk
     {
+        private string _filePath;
+
         public Xmk()
         {
             Version = 8;
@@ -21,19 +23,20 @@ namespace Sharktooth.Xmk
         {
             using (FileStream fs = File.OpenRead(path))
             {
-                return FromStream(fs);
+                return FromStream(fs, path);
             }
         }
 
-        public static Xmk FromStream(Stream stream)
+        public static Xmk FromStream(Stream stream, string filePath = "")
         {
             AwesomeReader ar = new AwesomeReader(stream, true);
             Xmk xmk = new Xmk();
+            xmk._filePath = filePath;
 
             // Reads header info
             xmk.Version = ar.ReadInt32();
             xmk.Hash = ar.ReadInt32();
-            
+
             int entryCount = ar.ReadInt32();
             int blobSize = ar.ReadInt32();
             xmk.Unknown1 = ar.ReadUInt32();
@@ -107,6 +110,7 @@ namespace Sharktooth.Xmk
             return words;
         }
 
+        public string Name => Path.GetFileNameWithoutExtension(_filePath);
         public int Version { get; set; }
         public int Hash { get; set; }
         public uint Unknown1 { get; set; }

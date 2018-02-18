@@ -11,18 +11,26 @@ namespace Sharktooth.Xmk
     {
         private const int DELTA_TICKS_PER_QUARTER = 480;
         private readonly List<TempoIndex> _tempoIdx = new List<TempoIndex>();
-        private Xmk _xmk;
+        private List<Xmk> _xmks;
 
         public XmkExport(Xmk xmk)
         {
-            _xmk = xmk;
+            _xmks = new List<Xmk>();
+            _xmks.Add(xmk);
+        }
+
+        public XmkExport(List<Xmk> xmks)
+        {
+            _xmks = new List<Xmk>(xmks);
         }
 
         public void Export(string path)
         {
             MidiEventCollection mid = new MidiEventCollection(1, DELTA_TICKS_PER_QUARTER);
-            mid.AddTrack(CreateTempoTrack(_xmk.TempoEntries));
-            mid.AddTrack(CreateTrack());
+            mid.AddTrack(CreateTempoTrack(_xmks[0].TempoEntries));
+
+            for (int i = 0; i < _xmks.Count; i++)
+                mid.AddTrack(CreateTrack(_xmks[i], i));
 
             MidiFile.Export(path, mid);
         }
@@ -124,24 +132,24 @@ namespace Sharktooth.Xmk
             return absoluteTicks;
         }
 
-        private List<MidiEvent> CreateTrack()
+        private List<MidiEvent> CreateTrack(Xmk xmk, int index)
         {
             List<MidiEvent> track = new List<MidiEvent>();
-            track.Add(new NAudio.Midi.TextEvent("NOTES", MetaEventType.SequenceTrackName, 0));
-            
-            foreach (var entry in _xmk.Entries)
+            track.Add(new NAudio.Midi.TextEvent(!string.IsNullOrEmpty(xmk.Name) ? xmk.Name : $"NOTES {index}", MetaEventType.SequenceTrackName, 0));
+
+            foreach (var entry in xmk.Entries)
             {
                 long start = GetAbsoluteTime(entry.Start * 1000);
                 long end = GetAbsoluteTime(entry.End * 1000);
-                int channel = entry.Unknown2 <= 0 ? 1 : entry.Unknown2;
+                int velocity = entry.Unknown2 == 0 ? 100 : entry.Unknown2 % 128;
                 
                 // Text event?
                 if (!string.IsNullOrEmpty(entry.Text))
                     track.Add(new NAudio.Midi.TextEvent(entry.Text, MetaEventType.TextEvent, start));
 
                 if ((end - start) <= 0 || entry.Pitch > 127) continue;
-                track.Add(new NoteEvent(start, channel, MidiCommandCode.NoteOn, entry.Pitch, 100));
-                track.Add(new NoteEvent(end, channel, MidiCommandCode.NoteOff, entry.Pitch, 100));
+                track.Add(new NoteEvent(start, 1, MidiCommandCode.NoteOn, entry.Pitch, velocity));
+                track.Add(new NoteEvent(end, 1, MidiCommandCode.NoteOff, entry.Pitch, velocity));
             }
 
             // Adds end track

@@ -51,6 +51,7 @@
     <Compile Include="AwesomeReader.cs" />
     <Compile Include="FarArchive.cs" />
     <Compile Include="FarEntry.cs" />
+    <Compile Include="MidiMapping.cs" />
     <Compile Include="Mub\MubExport.cs" />
     <Compile Include="Mub\Mub.cs" />
     <Compile Include="Mub\MubEntry.cs" />

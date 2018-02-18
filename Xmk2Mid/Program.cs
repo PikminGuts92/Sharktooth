@@ -39,7 +39,23 @@ namespace Xmk2Mid
                 // Extracts xmk files from archive
                 FarArchive archive = new FarArchive(inputPath);
                 var files = archive.GetAllFilesByExtension(".xmk");
+                List<Xmk> xmks = new List<Xmk>();
+                
+                // Reads in xmk files
+                foreach (FarEntry file in files)
+                {
+                    using (var stream = new MemoryStream(file.GetBytes()))
+                    {
+                        Xmk xmk = Xmk.FromStream(stream, file.Name);
+                        xmks.Add(xmk);
+                    }
+                }
 
+                // Converts XMK files
+                XmkExport mid = new XmkExport(xmks);
+                mid.Export(outputPath);
+
+                archive.Dispose();
             }
             else if (inputPath.EndsWith(".xmk", StringComparison.CurrentCultureIgnoreCase))
             {
