@@ -18,6 +18,6 @@ namespace Sharktooth
         public uint Unknown4;
         public string Text;
 
-        public override string ToString() => $"{Start:0.000}, {End:0.000}, {Pitch} ,\"{Text}\"";
+        public override string ToString() => $"{Start:0.000}s, {End:0.000}s, {Pitch} , \"{Text}\", [{Unknown1} {Unknown2} {Unknown3} {Unknown4}]";
     }
 }

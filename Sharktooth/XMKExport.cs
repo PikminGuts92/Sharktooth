@@ -133,14 +133,15 @@ namespace Sharktooth
             {
                 long start = GetAbsoluteTime(entry.Start * 1000);
                 long end = GetAbsoluteTime(entry.End * 1000);
+                int channel = entry.Unknown2 <= 0 ? 1 : entry.Unknown2;
                 
                 // Text event?
                 if (!string.IsNullOrEmpty(entry.Text))
                     track.Add(new NAudio.Midi.TextEvent(entry.Text, MetaEventType.TextEvent, start));
 
                 if ((end - start) <= 0 || entry.Pitch > 127) continue;
-                track.Add(new NoteEvent(start, 1, MidiCommandCode.NoteOn, entry.Pitch, 100));
-                track.Add(new NoteEvent(end, 1, MidiCommandCode.NoteOff, entry.Pitch, 100));
+                track.Add(new NoteEvent(start, channel, MidiCommandCode.NoteOn, entry.Pitch, 100));
+                track.Add(new NoteEvent(end, channel, MidiCommandCode.NoteOff, entry.Pitch, 100));
             }
 
             // Adds end track

@@ -19,5 +19,7 @@ namespace Sharktooth
             MicroPerQuarter = mpq;
             Ticks = ticks;
         }
+
+        public override string ToString() => $"{Start:0.000}s, {MicroPerQuarter}mpq, {Ticks}ticks, {BPM:0.000}bpm";
     }
 }
