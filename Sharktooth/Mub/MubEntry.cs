@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Sharktooth
+namespace Sharktooth.Mub
 {
     public struct MubEntry
     {

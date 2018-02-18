@@ -49,19 +49,20 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AwesomeReader.cs" />
-    <Compile Include="MIDIExport.cs" />
-    <Compile Include="Mub.cs" />
-    <Compile Include="MubEntry.cs" />
+    <Compile Include="Mub\MubExport.cs" />
+    <Compile Include="Mub\Mub.cs" />
+    <Compile Include="Mub\MubEntry.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TempoIndex.cs" />
-    <Compile Include="XMK.cs" />
-    <Compile Include="XMKEvent.cs" />
-    <Compile Include="XMKExport.cs" />
-    <Compile Include="XMKTempo.cs" />
+    <Compile Include="Xmk\Xmk.cs" />
+    <Compile Include="Xmk\XmkEvent.cs" />
+    <Compile Include="Xmk\XmkExport.cs" />
+    <Compile Include="Xmk\XmkTempo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>xcopy "$(SolutionDir)Libraries\*" "$(TargetDir)" /s /d</PostBuildEvent>

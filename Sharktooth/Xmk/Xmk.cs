@@ -5,19 +5,19 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 
-namespace Sharktooth
+namespace Sharktooth.Xmk
 {
-    public class XMK
+    public class Xmk
     {
-        public XMK()
+        public Xmk()
         {
             Version = 8;
 
-            TempoEntries = new List<XMKTempo>();
-            Entries = new List<XMKEvent>();
+            TempoEntries = new List<XmkTempo>();
+            Entries = new List<XmkEvent>();
         }
 
-        public static XMK FromFile(string path)
+        public static Xmk FromFile(string path)
         {
             using (FileStream fs = File.OpenRead(path))
             {
@@ -25,10 +25,10 @@ namespace Sharktooth
             }
         }
 
-        public static XMK FromStream(Stream stream)
+        public static Xmk FromStream(Stream stream)
         {
             AwesomeReader ar = new AwesomeReader(stream, true);
-            XMK xmk = new XMK();
+            Xmk xmk = new Xmk();
 
             // Reads header info
             xmk.Version = ar.ReadInt32();
@@ -45,7 +45,7 @@ namespace Sharktooth
             // Parses tempo map
             for (int i = 0; i < tempoCount; i++)
             {
-                XMKTempo entry = new XMKTempo()
+                XmkTempo entry = new XmkTempo()
                 {
                     Start = ar.ReadSingle(),
                     MicroPerQuarter = ar.ReadUInt32(),
@@ -67,7 +67,7 @@ namespace Sharktooth
             // Parses events
             for (int i = 0; i < entryCount; i++)
             {
-                XMKEvent entry = new XMKEvent()
+                XmkEvent entry = new XmkEvent()
                 {
                     Unknown1 = ar.ReadUInt32(),
                     Unknown2 = ar.ReadUInt16(),
@@ -112,8 +112,8 @@ namespace Sharktooth
         public uint Unknown1 { get; set; }
         public uint Unknown2 { get; set; }
 
-        public List<XMKTempo> TempoEntries { get; set; }
-        public List<XMKEvent> Entries { get; set; }
+        public List<XmkTempo> TempoEntries { get; set; }
+        public List<XmkEvent> Entries { get; set; }
         public byte[] StringBlob { get; set; }
     }
 }

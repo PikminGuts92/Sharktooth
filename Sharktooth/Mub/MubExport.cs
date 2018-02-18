@@ -5,14 +5,14 @@ using System.Text;
 using System.Threading.Tasks;
 using NAudio.Midi;
 
-namespace Sharktooth
+namespace Sharktooth.Mub
 {
-    public class MIDIExport
+    public class MubExport
     {
         private const int DELTA_TICKS_PER_QUARTER = 480;
         private Mub _mub;
 
-        public MIDIExport(Mub mub)
+        public MubExport(Mub mub)
         {
             _mub = mub;
         }

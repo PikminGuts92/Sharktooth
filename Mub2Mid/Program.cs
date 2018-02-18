@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Sharktooth;
+using Sharktooth.Mub;
 
 namespace Mub2Mid
 {
@@ -12,7 +12,7 @@ namespace Mub2Mid
         static void Main(string[] args)
         {
             Mub mub = Mub.FromFile(args[0]);
-            MIDIExport mid = new MIDIExport(mub);
+            MubExport mid = new MubExport(mub);
             mid.Export(args[1]);
         }
     }

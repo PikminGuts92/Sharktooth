@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Sharktooth;
+using Sharktooth.Xmk;
 
 namespace Xmk2Mid
 {
@@ -11,8 +11,8 @@ namespace Xmk2Mid
     {
         static void Main(string[] args)
         {
-            XMK xmk = XMK.FromFile(args[0]);
-            XMKExport mid = new XMKExport(xmk);
+            Xmk xmk = Xmk.FromFile(args[0]);
+            XmkExport mid = new XmkExport(xmk);
             mid.Export(args[1]);
         }
     }

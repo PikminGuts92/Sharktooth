@@ -5,15 +5,15 @@ using System.Text;
 using System.Threading.Tasks;
 using NAudio.Midi;
 
-namespace Sharktooth
+namespace Sharktooth.Xmk
 {
-    public class XMKExport
+    public class XmkExport
     {
         private const int DELTA_TICKS_PER_QUARTER = 480;
         private readonly List<TempoIndex> _tempoIdx = new List<TempoIndex>();
-        private XMK _xmk;
+        private Xmk _xmk;
 
-        public XMKExport(XMK xmk)
+        public XmkExport(Xmk xmk)
         {
             _xmk = xmk;
         }
@@ -27,7 +27,7 @@ namespace Sharktooth
             MidiFile.Export(path, mid);
         }
 
-        private List<MidiEvent> CreateTempoTrack(List<XMKTempo> tempos)
+        private List<MidiEvent> CreateTempoTrack(List<XmkTempo> tempos)
         {
             List<MidiEvent> track = new List<MidiEvent>();
             _tempoIdx.Clear();

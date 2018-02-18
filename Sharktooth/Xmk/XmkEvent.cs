@@ -4,10 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Sharktooth
+namespace Sharktooth.Xmk
 {
     // 24 bytes
-    public struct XMKEvent
+    public struct XmkEvent
     {
         public uint Unknown1;
         public ushort Unknown2;

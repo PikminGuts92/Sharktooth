@@ -24,7 +24,7 @@ using System.IO;
  * 	Pointer to text value in blob, starting from first entry
  */
 
-namespace Sharktooth
+namespace Sharktooth.Mub
 {
     public class Mub
     {
