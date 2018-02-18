@@ -7,6 +7,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sharktooth", "Sharktooth\Sh
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mub2Midi", "Mub2Midi\Mub2Midi.csproj", "{FC4114DE-6690-4792-ADB9-62FC8651BA61}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Libraries", "Libraries", "{323452C4-526D-4D31-9A8C-09766FD7D905}"
+	ProjectSection(SolutionItems) = preProject
+		Libraries\GameArchives.dll = Libraries\GameArchives.dll
+		Libraries\GameArchives_LICENSE = Libraries\GameArchives_LICENSE
+		Libraries\GameArchives_README.md = Libraries\GameArchives_README.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
