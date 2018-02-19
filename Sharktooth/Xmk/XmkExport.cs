@@ -129,7 +129,7 @@ namespace Sharktooth.Xmk
                         RealTime = tempoEntry.Start * 1000,
                         BPM = tempoEntry.BPM
                     };
-
+                    
                     track.Add(new NAudio.Midi.TempoEvent(idxEntry.MicroPerQuarter, idxEntry.AbsoluteTime));
                     _tempoIdx.Add(idxEntry);
                 }
@@ -140,7 +140,7 @@ namespace Sharktooth.Xmk
             {
                 int den = (int)Math.Log(ts.Denominator, 2);
 
-                track.Add(new TimeSignatureEvent(ts.Ticks, ts.Numerator, den, 24, 8));
+                track.Add(new TimeSignatureEvent(ts.Ticks / 2, ts.Numerator, den, 24, 8));
             }
 
             // Sort by absolute time (And ensure track name is first event)

@@ -8,7 +8,7 @@ namespace Sharktooth.Xmk
 {
     public struct XmkTimeSignature
     {
-        public uint Ticks;
+        public uint Ticks; // Absolute ticks (Uses 960ppq) -> Divide by 2 when using 480ppq
         public int Unknown;
         public int Numerator;
         public int Denominator;

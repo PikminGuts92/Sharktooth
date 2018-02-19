@@ -8,7 +8,7 @@ namespace Sharktooth.Xmk
 {
     public struct XmkTempo
     {
-        public uint Ticks; // ??
+        public uint Ticks; // Absolute ticks (Uses 960ppq) -> Divide by 2 when using 480ppq
         public float Start; // In seconds
         public uint MicroPerQuarter; // Micro seconds per quarter note
         public double BPM => 60000000.0d / MicroPerQuarter;
