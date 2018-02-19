@@ -14,7 +14,6 @@ namespace Sharktooth.Xmk
         private List<Xmk> _xmks;
 
         // Midi pitch mappings
-        private MidiMapping _noMap = MidiMapping.NoMapping();
         private MidiMapping _guitarMap = MidiMapping.CreateGuitar3();
 
         public XmkExport(Xmk xmk)
@@ -242,7 +241,7 @@ namespace Sharktooth.Xmk
             track.Add(new NAudio.Midi.TextEvent("PART VOCALS", MetaEventType.SequenceTrackName, 0));
 
             const int VOCALS_PHRASE = 105;
-            const int VOCALS_MAX_PITCH = 84;
+            //const int VOCALS_MAX_PITCH = 84;
             const int VOCALS_MIN_PITCH = 36;
 
             foreach (var entry in xmk.Entries)

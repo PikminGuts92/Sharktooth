@@ -10,23 +10,15 @@ namespace Sharktooth
     {
         private readonly Dictionary<int, int> _mappings;
 
-        private MidiMapping(bool map)
+        private MidiMapping()
         {
-            if (map)
-                _mappings = new Dictionary<int, int>();
+            _mappings = new Dictionary<int, int>();
         }
 
-        private int GetMapping(int input)
-        {
-            if (_mappings == null) return input;
-
-            return _mappings.ContainsKey(input) ? _mappings[input] : -1;
-        }
+        private int GetMapping(int input) => _mappings.ContainsKey(input)? _mappings[input] : -1;
 
         public int this[int input] => GetMapping(input);
-
-        public static MidiMapping NoMapping() => new MidiMapping(false);
-
+        
         public static MidiMapping CreateGuitar3()
         {
             const int EXPERT = 59;
@@ -40,7 +32,7 @@ namespace Sharktooth
             const int CH_MEDIUM = 70;
             const int CH_EASY   = 58;
 
-            MidiMapping mid = new MidiMapping(true);
+            MidiMapping mid = new MidiMapping();
 
             // Expert guitar
             mid._mappings.Add(EXPERT + 15, CH_STARPOWER ); // SP
