@@ -15,6 +15,7 @@ namespace Sharktooth.Xmk
 
         // Midi pitch mappings
         private MidiMapping _guitarMap = MidiMapping.CreateGuitar3();
+        private MidiMapping _guitarTouchMap = MidiMapping.CreateGuitar6();
 
         public XmkExport(Xmk xmk)
         {
@@ -59,7 +60,8 @@ namespace Sharktooth.Xmk
                             break;
                         case "touchguitar":
                             trackName = "TOUCH GUITAR";
-                            break;
+                            mid.AddTrack(ParseGuitar6(xmk));
+                            continue;
                         case "vocals":
                             trackName = "PART VOCALS";
                             mid.AddTrack(ParseVocals(xmk));
@@ -236,6 +238,36 @@ namespace Sharktooth.Xmk
                     track.Add(new NoteEvent(end, 1, MidiCommandCode.NoteOff, map[entry.Pitch + shift], velocity));
                 }
 
+                int pitchRemap = map[entry.Pitch];
+                if (pitchRemap == -1) continue;
+
+                track.Add(new NoteEvent(start, 1, MidiCommandCode.NoteOn, pitchRemap, velocity));
+                track.Add(new NoteEvent(end, 1, MidiCommandCode.NoteOff, pitchRemap, velocity));
+            }
+
+            // Adds end track
+            track.Add(new MetaEvent(MetaEventType.EndTrack, 0, track.Last().AbsoluteTime));
+            return track;
+        }
+
+        private List<MidiEvent> ParseGuitar6(Xmk xmk, bool guitar = true)
+        {
+            MidiMapping map = _guitarTouchMap;
+            List<MidiEvent> track = new List<MidiEvent>();
+            track.Add(new NAudio.Midi.TextEvent(guitar ? "PART GUITAR" : "PART BASS", MetaEventType.SequenceTrackName, 0));
+
+            foreach (var entry in xmk.Entries)
+            {
+                long start = GetAbsoluteTime(entry.Start * 1000);
+                long end = GetAbsoluteTime(entry.End * 1000);
+                int velocity = 100;
+
+                // Text event?
+                if (!string.IsNullOrEmpty(entry.Text))
+                    track.Add(new NAudio.Midi.TextEvent(entry.Text, MetaEventType.TextEvent, start));
+
+                if ((end - start) <= 0 || entry.Pitch > 127) continue;
+                
                 int pitchRemap = map[entry.Pitch];
                 if (pitchRemap == -1) continue;
 

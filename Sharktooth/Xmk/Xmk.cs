@@ -63,7 +63,7 @@ namespace Sharktooth.Xmk
                 XmkTimeSignature ts = new XmkTimeSignature()
                 {
                     Ticks = ar.ReadUInt32(),
-                    Unknown = ar.ReadInt32(),
+                    Measure = ar.ReadInt32(),
                     Numerator = ar.ReadInt32(),
                     Denominator = ar.ReadInt32()
                 };
