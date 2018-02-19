@@ -61,6 +61,7 @@
     <Compile Include="Xmk\XmkEvent.cs" />
     <Compile Include="Xmk\XmkExport.cs" />
     <Compile Include="Xmk\XmkTempo.cs" />
+    <Compile Include="Xmk\XmkTimeSignature.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

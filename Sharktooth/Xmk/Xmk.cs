@@ -16,6 +16,7 @@ namespace Sharktooth.Xmk
             Version = 8;
 
             TempoEntries = new List<XmkTempo>();
+            TimeSignatureEntries = new List<XmkTimeSignature>();
             Entries = new List<XmkEvent>();
         }
 
@@ -42,26 +43,36 @@ namespace Sharktooth.Xmk
             xmk.Unknown1 = ar.ReadUInt32();
 
             int tempoCount = ar.ReadInt32();
-            int tsCount = ar.ReadInt32(); // Still unsure about that one
-            xmk.Unknown2 = ar.ReadUInt32();
+            int tsCount = ar.ReadInt32();
 
             // Parses tempo map
             for (int i = 0; i < tempoCount; i++)
             {
                 XmkTempo entry = new XmkTempo()
                 {
+                    Ticks = ar.ReadUInt32(),
                     Start = ar.ReadSingle(),
-                    MicroPerQuarter = ar.ReadUInt32(),
-                    Ticks = ar.ReadUInt32()
+                    MicroPerQuarter = ar.ReadUInt32()
                 };
                 xmk.TempoEntries.Add(entry);
             }
 
-            // Skips unknown data
-            ar.BaseStream.Position += (16 * tsCount) - 4;
-            long startOffset = ar.BaseStream.Position;
+            // Parse time signatures
+            for (int i = 0; i < tsCount; i++)
+            {
+                XmkTimeSignature ts = new XmkTimeSignature()
+                {
+                    Ticks = ar.ReadUInt32(),
+                    Unknown = ar.ReadInt32(),
+                    Numerator = ar.ReadInt32(),
+                    Denominator = ar.ReadInt32()
+                };
+
+                xmk.TimeSignatureEntries.Add(ts);
+            }
 
             // Reads in strings
+            long startOffset = ar.BaseStream.Position;
             ar.BaseStream.Seek(entryCount * 24, SeekOrigin.Current);
             xmk.StringBlob = ar.ReadBytes(blobSize);
             Dictionary<long, string> words = ParseBlob(xmk.StringBlob);
@@ -114,9 +125,9 @@ namespace Sharktooth.Xmk
         public int Version { get; set; }
         public int Hash { get; set; }
         public uint Unknown1 { get; set; }
-        public uint Unknown2 { get; set; }
 
         public List<XmkTempo> TempoEntries { get; set; }
+        public List<XmkTimeSignature> TimeSignatureEntries { get; set; }
         public List<XmkEvent> Entries { get; set; }
         public byte[] StringBlob { get; set; }
     }

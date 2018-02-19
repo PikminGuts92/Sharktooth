@@ -30,7 +30,7 @@ namespace Sharktooth.Xmk
         public void Export(string path, bool remap = false)
         {
             MidiEventCollection mid = new MidiEventCollection(1, DELTA_TICKS_PER_QUARTER);
-            mid.AddTrack(CreateTempoTrack(_xmks[0].TempoEntries));
+            mid.AddTrack(CreateTempoTrack(_xmks[0].TempoEntries, _xmks[0].TimeSignatureEntries));
 
             if (!remap)
             {
@@ -73,7 +73,7 @@ namespace Sharktooth.Xmk
             MidiFile.Export(path, mid);
         }
 
-        private List<MidiEvent> CreateTempoTrack(List<XmkTempo> tempos)
+        private List<MidiEvent> CreateTempoTrack(List<XmkTempo> tempos, List<XmkTimeSignature> timeSignatures)
         {
             List<MidiEvent> track = new List<MidiEvent>();
             _tempoIdx.Clear();
@@ -135,6 +135,19 @@ namespace Sharktooth.Xmk
                 }
             }
             
+            // Adds time signature changes
+            foreach (var ts in timeSignatures)
+            {
+                int den = (int)Math.Log(ts.Denominator, 2);
+
+                track.Add(new TimeSignatureEvent(ts.Ticks, ts.Numerator, den, 24, 8));
+            }
+
+            // Sort by absolute time (And ensure track name is first event)
+            track.Sort((x, y) => (int)(x is NAudio.Midi.TextEvent
+                                       && ((NAudio.Midi.TextEvent)x).MetaEventType == MetaEventType.SequenceTrackName
+                                       ? int.MinValue : x.AbsoluteTime - y.AbsoluteTime));
+
             // Adds end track
             track.Add(new MetaEvent(MetaEventType.EndTrack, 0, track.Last().AbsoluteTime));
             return track;
