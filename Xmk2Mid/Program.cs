@@ -53,7 +53,7 @@ namespace Xmk2Mid
 
                 // Converts XMK files
                 XmkExport mid = new XmkExport(xmks);
-                mid.Export(outputPath);
+                mid.Export(outputPath, true);
 
                 archive.Dispose();
             }

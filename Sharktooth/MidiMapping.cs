@@ -10,24 +10,74 @@ namespace Sharktooth
     {
         private readonly Dictionary<int, int> _mappings;
 
-        private MidiMapping()
+        private MidiMapping(bool map)
         {
-            _mappings = new Dictionary<int, int>();
+            if (map)
+                _mappings = new Dictionary<int, int>();
         }
+
+        private int GetMapping(int input)
+        {
+            if (_mappings == null) return input;
+
+            return _mappings.ContainsKey(input) ? _mappings[input] : -1;
+        }
+
+        public int this[int input] => GetMapping(input);
+
+        public static MidiMapping NoMapping() => new MidiMapping(false);
 
         public static MidiMapping CreateGuitar3()
         {
-            MidiMapping mid = new MidiMapping();
+            const int EXPERT = 59;
+            const int HARD   = 41;
+            const int MEDIUM = 23;
+            const int EASY   =  5;
+
+            const int CH_STARPOWER = 116;
+            const int CH_EXPERT = 94;
+            const int CH_HARD   = 82;
+            const int CH_MEDIUM = 70;
+            const int CH_EASY   = 58;
+
+            MidiMapping mid = new MidiMapping(true);
 
             // Expert guitar
-            mid._mappings.Add(74, 116); // SP
-            mid._mappings.Add(69,  94); // Open
-            mid._mappings.Add(64,  97); // W3
-            mid._mappings.Add(63, 100); // B3
-            mid._mappings.Add(62,  96); // W2
-            mid._mappings.Add(61,  99); // B2
-            mid._mappings.Add(60,  95); // W1
-            mid._mappings.Add(59,  98); // B1
+            mid._mappings.Add(EXPERT + 15, CH_STARPOWER ); // SP
+            mid._mappings.Add(EXPERT + 10, CH_EXPERT    ); // Open
+            mid._mappings.Add(EXPERT +  5, CH_EXPERT + 3); // W3
+            mid._mappings.Add(EXPERT +  4, CH_EXPERT + 6); // B3
+            mid._mappings.Add(EXPERT +  3, CH_EXPERT + 2); // W2
+            mid._mappings.Add(EXPERT +  2, CH_EXPERT + 5); // B2
+            mid._mappings.Add(EXPERT +  1, CH_EXPERT + 1); // W1
+            mid._mappings.Add(EXPERT     , CH_EXPERT + 4); // B1
+
+            // Hard guitar
+            mid._mappings.Add(HARD + 10, CH_HARD    ); // Open
+            mid._mappings.Add(HARD +  5, CH_HARD + 3); // W3
+            mid._mappings.Add(HARD +  4, CH_HARD + 6); // B3
+            mid._mappings.Add(HARD +  3, CH_HARD + 2); // W2
+            mid._mappings.Add(HARD +  2, CH_HARD + 5); // B2
+            mid._mappings.Add(HARD +  1, CH_HARD + 1); // W1
+            mid._mappings.Add(HARD     , CH_HARD + 4); // B1
+
+            // Medium guitar
+            mid._mappings.Add(MEDIUM + 10, CH_MEDIUM    ); // Open
+            mid._mappings.Add(MEDIUM +  5, CH_MEDIUM + 3); // W3
+            mid._mappings.Add(MEDIUM +  4, CH_MEDIUM + 6); // B3
+            mid._mappings.Add(MEDIUM +  3, CH_MEDIUM + 2); // W2
+            mid._mappings.Add(MEDIUM +  2, CH_MEDIUM + 5); // B2
+            mid._mappings.Add(MEDIUM +  1, CH_MEDIUM + 1); // W1
+            mid._mappings.Add(MEDIUM     , CH_MEDIUM + 4); // B1
+
+            // Easy guitar
+            mid._mappings.Add(EASY + 10, CH_EASY    ); // Open
+            mid._mappings.Add(EASY +  5, CH_EASY + 3); // W3
+            mid._mappings.Add(EASY +  4, CH_EASY + 6); // B3
+            mid._mappings.Add(EASY +  3, CH_EASY + 2); // W2
+            mid._mappings.Add(EASY +  2, CH_EASY + 5); // B2
+            mid._mappings.Add(EASY +  1, CH_EASY + 1); // W1
+            mid._mappings.Add(EASY     , CH_EASY + 4); // B1
 
             return mid;
         }
