@@ -83,7 +83,7 @@ namespace Sharktooth.Xmk
 
                 // Adds text
                 int offset = ar.ReadInt32() - (entryCount * 24);
-                if (offset >= 0)
+                if (offset >= 0 && words.ContainsKey(offset))
                     entry.Text = words[offset];
 
                 xmk.Entries.Add(entry);

@@ -62,7 +62,7 @@ namespace Xmk2Mid
                 // Directly converts XMK file
                 Xmk xmk = Xmk.FromFile(inputPath);
                 XmkExport mid = new XmkExport(xmk);
-                mid.Export(outputPath);
+                mid.Export(outputPath, true);
             }
             else
                 Console.WriteLine($"\"{Path.GetExtension(inputPath)}\" extension is unsupported. Must be either .xmk or .far");
