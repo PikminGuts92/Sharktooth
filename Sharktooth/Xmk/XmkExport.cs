@@ -50,7 +50,8 @@ namespace Sharktooth.Xmk
                     {
                         case "control":
                             trackName = "CONTROL";
-                            break;
+                            mid.AddTrack(ParseEvents(xmk));
+                            continue;
                         case "guitar_3x2":
                             trackName = "PART GUITAR GHL";
                             mid.AddTrack(ParseGuitar3(xmk));
@@ -323,6 +324,28 @@ namespace Sharktooth.Xmk
                     track.Add(new NoteEvent(start, 1, MidiCommandCode.NoteOn, VOCALS_PHRASE, velocity));
                     track.Add(new NoteEvent(end, 1, MidiCommandCode.NoteOff, VOCALS_PHRASE, velocity));
                 }
+            }
+
+            // Adds end track
+            track.Add(new MetaEvent(MetaEventType.EndTrack, 0, track.Last().AbsoluteTime));
+            return track;
+        }
+
+        private List<MidiEvent> ParseEvents(Xmk xmk)
+        {
+            MidiMapping map = _guitarMap;
+            List<MidiEvent> track = new List<MidiEvent>();
+            track.Add(new NAudio.Midi.TextEvent("EVENTS", MetaEventType.SequenceTrackName, 0));
+
+            foreach (var entry in xmk.Entries)
+            {
+                if (string.IsNullOrEmpty(entry.Text) || entry.Unknown3 != 3) continue; // Practice section
+
+                long start = GetAbsoluteTime(entry.Start * 1000);
+                long end = GetAbsoluteTime(entry.End * 1000);
+                string text = $"[section {entry.Text}]";
+                
+                track.Add(new NAudio.Midi.TextEvent(text, MetaEventType.TextEvent, start));
             }
 
             // Adds end track
