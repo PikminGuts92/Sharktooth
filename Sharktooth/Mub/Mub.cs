@@ -69,7 +69,7 @@ namespace Sharktooth.Mub
                 float length = ar.ReadSingle();
                 int wordOffset = ar.ReadInt32();
 
-                mub.Entries.Add(new MubEntry(start, mod, length, wordOffset > 0 ? words[wordOffset] : ""));
+                mub.Entries.Add(new MubEntry(start, mod, length, wordOffset > 0 && words.ContainsKey(wordOffset) ? words[wordOffset] : ""));
             }
             
             return mub;
