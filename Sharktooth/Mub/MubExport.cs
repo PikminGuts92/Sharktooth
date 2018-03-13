@@ -56,6 +56,15 @@ namespace Sharktooth.Mub
                 }
 
                 if (entry.Length <= 0) continue;
+
+                if (!string.IsNullOrEmpty(entry.Text))
+                {
+                    if ((entry.Modifier & 0x1000) == 0x1000)
+                        track.Add(new NAudio.Midi.TextEvent(entry.Text, MetaEventType.Lyric, start)); // Lyric event?
+                    else
+                        track.Add(new NAudio.Midi.TextEvent(entry.Text, MetaEventType.TextEvent, start));
+                }
+
                 track.Add(new NoteEvent(start, 1, MidiCommandCode.NoteOn, entry.Modifier & 0xFF, 100));
                 track.Add(new NoteEvent(end, 1, MidiCommandCode.NoteOff, entry.Modifier & 0xFF, 100));
             }
