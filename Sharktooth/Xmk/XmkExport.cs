@@ -218,6 +218,9 @@ namespace Sharktooth.Xmk
             List<MidiEvent> track = new List<MidiEvent>();
             track.Add(new NAudio.Midi.TextEvent(guitar ? "PART GUITAR GHL" : "PART BASS GHL", MetaEventType.SequenceTrackName, 0));
 
+            // Tracks HOPO on/off events
+            List<NoteOnEvent> hopoNotes = new List<NoteOnEvent>();
+
             foreach (var entry in xmk.Entries)
             {
                 long start = GetAbsoluteTime(entry.Start * 1000);
@@ -241,10 +244,67 @@ namespace Sharktooth.Xmk
 
                 int pitchRemap = map[entry.Pitch];
                 if (pitchRemap == -1) continue;
-
+                
                 track.Add(new NoteEvent(start, 1, MidiCommandCode.NoteOn, pitchRemap, velocity));
                 track.Add(new NoteEvent(end, 1, MidiCommandCode.NoteOff, pitchRemap, velocity));
+                
+                int hopoPitch;
+
+                // Sets forced HOPO off pitch
+                if (pitchRemap >= 94 && pitchRemap <= 100) hopoPitch = 102; // Expert
+                else if (pitchRemap >= 82 && pitchRemap <= 88) hopoPitch = 90; // Hard
+                else if (pitchRemap >= 70 && pitchRemap <= 76) hopoPitch = 78; // Medium
+                else if (pitchRemap >= 58 && pitchRemap <= 64) hopoPitch = 66; // Easy
+                else continue;
+
+                hopoPitch -= (entry.Unknown3 & 0x80) >> 7; // 1 = Forced HOPO
+                hopoNotes.Add(new NoteOnEvent(start, 1, hopoPitch, velocity, (int)(end - start)));
             }
+
+            // Flattens HOPO events
+            var groupedNotes = hopoNotes.GroupBy(x => x.NoteNumber);
+            foreach (var group in groupedNotes)
+            {
+                int pitch = group.Key;
+
+                var currentNote = group.First();
+                var notes = new List<NoteOnEvent>();
+
+
+                foreach (var note in group.Skip(1))
+                {
+                    if ((currentNote.AbsoluteTime + currentNote.NoteLength) >= (note.AbsoluteTime))
+                    {
+                        currentNote.NoteLength = (int)(Math.Max(currentNote.AbsoluteTime + currentNote.NoteLength, note.AbsoluteTime + note.NoteLength) - currentNote.AbsoluteTime);
+                    }
+                    else
+                    {
+                        notes.Add(currentNote);
+                        currentNote = note;
+                    }
+                }
+
+                // Adds note to list if not found
+                if (!notes.Contains(currentNote))
+                    notes.Add(currentNote);
+
+                foreach (var note in notes)
+                {
+                    track.Add(new NoteEvent(note.AbsoluteTime, 1, MidiCommandCode.NoteOn, note.NoteNumber, note.Velocity));
+                    track.Add(new NoteEvent(note.AbsoluteTime + note.NoteLength, 1, MidiCommandCode.NoteOff, note.NoteNumber, note.Velocity));
+                }
+            }
+
+            // Sorts by absolute time
+            track.Sort((x, y) =>
+            {
+                if (x.AbsoluteTime < y.AbsoluteTime)
+                    return -1;
+                else if (x.AbsoluteTime > y.AbsoluteTime)
+                    return 1;
+                else
+                    return 0;
+            });
 
             // Adds end track
             track.Add(new MetaEvent(MetaEventType.EndTrack, 0, track.Last().AbsoluteTime));
