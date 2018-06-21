@@ -265,34 +265,26 @@ namespace Sharktooth.Xmk
             var groupedNotes = hopoNotes.GroupBy(x => x.NoteNumber);
             foreach (var group in groupedNotes)
             {
-                int pitch = group.Key;
+                // Selects longest note at each absolute time offset
+                var notes = group.GroupBy(x => x.AbsoluteTime).Select(y => y.OrderByDescending(z => z.NoteLength).First()).OrderBy(q => q.AbsoluteTime);
 
-                var currentNote = group.First();
-                var notes = new List<NoteOnEvent>();
+                NoteOnEvent prevNote = notes.First();
+                track.Add(prevNote);
 
-
-                foreach (var note in group.Skip(1))
+                foreach (var note in notes.Skip(1))
                 {
-                    if ((currentNote.AbsoluteTime + currentNote.NoteLength) >= (note.AbsoluteTime))
-                    {
-                        currentNote.NoteLength = (int)(Math.Max(currentNote.AbsoluteTime + currentNote.NoteLength, note.AbsoluteTime + note.NoteLength) - currentNote.AbsoluteTime);
-                    }
+                    if (note.AbsoluteTime >= prevNote.OffEvent.AbsoluteTime)
+                        track.Add(prevNote.OffEvent);
                     else
-                    {
-                        notes.Add(currentNote);
-                        currentNote = note;
-                    }
+                        // Overlap detected, insert note off event
+                        track.Add(new NoteEvent(note.AbsoluteTime, note.Channel, MidiCommandCode.NoteOff, note.NoteNumber, note.Velocity));
+
+                    track.Add(note);
+                    prevNote = note;
                 }
 
-                // Adds note to list if not found
-                if (!notes.Contains(currentNote))
-                    notes.Add(currentNote);
-
-                foreach (var note in notes)
-                {
-                    track.Add(new NoteEvent(note.AbsoluteTime, 1, MidiCommandCode.NoteOn, note.NoteNumber, note.Velocity));
-                    track.Add(new NoteEvent(note.AbsoluteTime + note.NoteLength, 1, MidiCommandCode.NoteOff, note.NoteNumber, note.Velocity));
-                }
+                // Adds last note off event
+                track.Add(prevNote.OffEvent);
             }
 
             // Sorts by absolute time
@@ -301,6 +293,12 @@ namespace Sharktooth.Xmk
                 if (x.AbsoluteTime < y.AbsoluteTime)
                     return -1;
                 else if (x.AbsoluteTime > y.AbsoluteTime)
+                    return 1;
+
+                // Same abs time, note off goes first
+                if (x.CommandCode == MidiCommandCode.NoteOff && y.CommandCode == MidiCommandCode.NoteOn)
+                    return -1;
+                else if (x.CommandCode == MidiCommandCode.NoteOn && y.CommandCode == MidiCommandCode.NoteOff)
                     return 1;
                 else
                     return 0;
