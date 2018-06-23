@@ -37,7 +37,18 @@ namespace Xmk2Mid
             if (inputPath.EndsWith(".far", StringComparison.CurrentCultureIgnoreCase))
             {
                 // Extracts xmk files from archive
-                FarArchive archive = new FarArchive(inputPath);
+                FarArchive archive;
+
+                try
+                {
+                    archive = new FarArchive(inputPath);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Unable to open archive because \"{ex.Message}\"");
+                    return;
+                }
+
                 var files = archive.GetAllFilesByExtension(".xmk");
                 List<Xmk> xmks = new List<Xmk>();
                 
@@ -51,10 +62,17 @@ namespace Xmk2Mid
                     }
                 }
 
-                // Converts XMK files
-                XmkExport mid = new XmkExport(xmks);
-                mid.Export(outputPath, true);
-
+                if (xmks.Count > 0)
+                {
+                    // Converts XMK files
+                    XmkExport mid = new XmkExport(xmks);
+                    mid.Export(outputPath, true);
+                }
+                else
+                {
+                    Console.WriteLine("No xmk files were found in archive");
+                }
+                
                 archive.Dispose();
             }
             else if (inputPath.EndsWith(".xmk", StringComparison.CurrentCultureIgnoreCase))
