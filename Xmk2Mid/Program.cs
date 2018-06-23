@@ -32,8 +32,7 @@ namespace Xmk2Mid
                 inputPath = args[0];
                 outputPath = args[1];
             }
-
-
+            
             if (inputPath.EndsWith(".far", StringComparison.CurrentCultureIgnoreCase))
             {
                 // Extracts xmk files from archive

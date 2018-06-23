@@ -24,9 +24,9 @@ namespace Sharktooth
                 if (pkg is FSARPackage)
                     _archive = pkg as FSARPackage;
             }
-            catch
+            catch (Exception ex)
             {
-                // Do something?
+                throw ex;
             }
         }
 
