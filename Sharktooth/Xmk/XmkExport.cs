@@ -10,6 +10,7 @@ namespace Sharktooth.Xmk
     public class XmkExport
     {
         private const int DELTA_TICKS_PER_QUARTER = 480;
+        private const int DELTA_TICKS_PER_MEASURE = DELTA_TICKS_PER_QUARTER * 4;
         private readonly List<TempoIndex> _tempoIdx = new List<TempoIndex>();
         private List<Xmk> _xmks;
 
@@ -31,7 +32,8 @@ namespace Sharktooth.Xmk
         public void Export(string path, bool remap = false)
         {
             MidiEventCollection mid = new MidiEventCollection(1, DELTA_TICKS_PER_QUARTER);
-            mid.AddTrack(CreateTempoTrack(_xmks[0].TempoEntries, _xmks[0].TimeSignatureEntries));
+            Xmk firstXmk = _xmks.FirstOrDefault();
+            mid.AddTrack(CreateTempoTrack(firstXmk.TempoEntries, firstXmk.TimeSignatureEntries));
 
             if (!remap)
             {
@@ -71,9 +73,56 @@ namespace Sharktooth.Xmk
 
                     mid.AddTrack(CreateTrack(xmk, i));
                 }
+                
+                // Generates up/down events for BEAT track (Needed for beat markers in CH and OD in RB)
+                mid.AddTrack(GenerateBeatTrack(firstXmk.TimeSignatureEntries, mid));
             }
 
             MidiFile.Export(path, mid);
+        }
+
+        private List<MidiEvent> GenerateBeatTrack(List<XmkTimeSignature> timeSigs, MidiEventCollection mid)
+        {
+            List<MidiEvent> track = new List<MidiEvent>();
+            track.Add(new NAudio.Midi.TextEvent("BEAT", MetaEventType.SequenceTrackName, 0));
+
+            long lastEventOffset = mid.SelectMany(x => x).Select(y => y.AbsoluteTime).Max();
+            long offset = 0;
+
+            var tsEndOffsets = timeSigs.Skip(1).Select(x => (long)(x.Ticks / 2)).ToList();
+            tsEndOffsets.Add(lastEventOffset);
+            
+            int tsIdx = 0, currentBeat = 1;
+
+            while (offset < lastEventOffset)
+            {
+                if (offset >= tsEndOffsets[tsIdx])
+                {
+                    // New time signature
+                    currentBeat = 1;
+                    tsIdx++;
+
+                    offset = timeSigs[tsIdx].Ticks / 2;
+                }
+
+                var ts = timeSigs[tsIdx];
+                int beatSize = DELTA_TICKS_PER_MEASURE / ts.Denominator;
+                int eventSize = beatSize / 4;
+
+                if (currentBeat > ts.Numerator) currentBeat = 1;
+                int pitch = currentBeat == 1 ? 12 : 13; // 12 = down, 13 = up
+
+                // Adds beat event
+                track.Add(new NoteEvent(offset, 1, MidiCommandCode.NoteOn, pitch, 1));
+                track.Add(new NoteEvent(offset + eventSize, 1, MidiCommandCode.NoteOff, pitch, 1));
+
+                currentBeat++;
+                offset += beatSize;
+            }
+            
+            // Adds end track
+            track.Add(new MetaEvent(MetaEventType.EndTrack, 0, track.Last().AbsoluteTime));
+            return track;
         }
 
         private List<MidiEvent> CreateTempoTrack(List<XmkTempo> tempos, List<XmkTimeSignature> timeSignatures)
