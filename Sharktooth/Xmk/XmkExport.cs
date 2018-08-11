@@ -11,6 +11,8 @@ namespace Sharktooth.Xmk
     {
         private const int DELTA_TICKS_PER_QUARTER = 480;
         private const int DELTA_TICKS_PER_MEASURE = DELTA_TICKS_PER_QUARTER * 4;
+        private const int QUANTIZATION = 128; // Should be power of 2
+
         private readonly List<TempoIndex> _tempoIdx = new List<TempoIndex>();
         private List<Xmk> _xmks;
 
@@ -144,7 +146,7 @@ namespace Sharktooth.Xmk
                 long absoluteTicks = currentTempo.AbsoluteTime + (1000L * (long)difference * DELTA_TICKS_PER_QUARTER) / currentTempo.MicroPerQuarter;
 
                 // Applies quantization and snaps to grid
-                int q = DELTA_TICKS_PER_QUARTER / 32; // 1/128th quantization
+                int q = DELTA_TICKS_PER_MEASURE / QUANTIZATION;
                 if (absoluteTicks % q != 0)
                 {
                     long before = absoluteTicks % q;
@@ -220,7 +222,7 @@ namespace Sharktooth.Xmk
             long absoluteTicks = currentTempo.AbsoluteTime + (1000L * (long)difference * DELTA_TICKS_PER_QUARTER) / currentTempo.MicroPerQuarter;
 
             // Applies quantization and snaps to grid
-            int q = DELTA_TICKS_PER_QUARTER / 32; // 1/128th quantization
+            int q = DELTA_TICKS_PER_MEASURE / QUANTIZATION;
             if (absoluteTicks % q != 0)
             {
                 long before = absoluteTicks % q;
