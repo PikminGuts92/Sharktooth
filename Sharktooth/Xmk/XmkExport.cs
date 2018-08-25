@@ -19,6 +19,7 @@ namespace Sharktooth.Xmk
         // Midi pitch mappings
         private MidiMapping _guitarMap = MidiMapping.CreateGuitar3();
         private MidiMapping _guitarTouchMap = MidiMapping.CreateGuitar6();
+        private MidiMapping _drumsMap = MidiMapping.CreateRBDrums();
 
         public XmkExport(Xmk xmk)
         {
@@ -74,22 +75,23 @@ namespace Sharktooth.Xmk
                     switch (trackName.ToLower())
                     {
                         case "control":
-                            trackName = "CONTROL";
+                            // EVENTS
                             mid.AddTrack(ParseEvents(xmk));
                             continue;
                         case "guitar_3x2":
-                            trackName = "PART GUITAR GHL";
+                            // PART GUITAR GHL
                             mid.AddTrack(ParseGuitar3(xmk));
                             continue;
                         case "touchdrums":
-                            trackName = "TOUCH DRUMS";
-                            break;
+                            // PART DRUMS
+                            mid.AddTrack(ParseDrums(xmk));
+                            continue;
                         case "touchguitar":
-                            trackName = "TOUCH GUITAR";
+                            // PART GUITAR
                             mid.AddTrack(ParseGuitar6(xmk));
                             continue;
                         case "vocals":
-                            trackName = "PART VOCALS";
+                            // PART VOCALS
                             mid.AddTrack(ParseVocals(xmk));
                             continue;
                     }
@@ -359,6 +361,22 @@ namespace Sharktooth.Xmk
                 track.Add(prevNote.OffEvent);
             }
 
+            // Adds play event
+            var firstNote = track.Where(x => x is NoteEvent).Select(y => y as NoteEvent).OrderBy(y => y.AbsoluteTime).FirstOrDefault();
+            if (firstNote != null)
+            {
+                var idx = track.IndexOf(firstNote);
+                track.Insert(idx, new NAudio.Midi.TextEvent("[play]", MetaEventType.TextEvent, firstNote.AbsoluteTime));
+            }
+
+            // Adds idle event (end)
+            var lastNote = track.Where(x => x is NoteEvent).Select(y => y as NoteEvent).OrderByDescending(y => y.AbsoluteTime).FirstOrDefault();
+            if (lastNote != null)
+            {
+                var idx = track.IndexOf(lastNote);
+                track.Insert(idx, new NAudio.Midi.TextEvent("[idle]", MetaEventType.TextEvent, lastNote.AbsoluteTime));
+            }
+
             // Sorts by absolute time
             track.Sort((x, y) =>
             {
@@ -404,6 +422,72 @@ namespace Sharktooth.Xmk
 
                 track.Add(new NoteEvent(start, 1, MidiCommandCode.NoteOn, pitchRemap, velocity));
                 track.Add(new NoteEvent(end, 1, MidiCommandCode.NoteOff, pitchRemap, velocity));
+            }
+
+            // Adds play event
+            var firstNote = track.Where(x => x is NoteEvent).Select(y => y as NoteEvent).OrderBy(y => y.AbsoluteTime).FirstOrDefault();
+            if (firstNote != null)
+            {
+                var idx = track.IndexOf(firstNote);
+                track.Insert(idx, new NAudio.Midi.TextEvent("[play]", MetaEventType.TextEvent, firstNote.AbsoluteTime));
+            }
+
+            // Adds idle event (end)
+            var lastNote = track.Where(x => x is NoteEvent).Select(y => y as NoteEvent).OrderByDescending(y => y.AbsoluteTime).FirstOrDefault();
+            if (lastNote != null)
+            {
+                var idx = track.IndexOf(lastNote);
+                track.Insert(idx, new NAudio.Midi.TextEvent("[idle]", MetaEventType.TextEvent, lastNote.AbsoluteTime));
+            }
+
+            // Adds end track
+            track.Add(new MetaEvent(MetaEventType.EndTrack, 0, track.Last().AbsoluteTime));
+            return track;
+        }
+
+        private List<MidiEvent> ParseDrums(Xmk xmk)
+        {
+            MidiMapping map = _guitarTouchMap;
+            List<MidiEvent> track = new List<MidiEvent>();
+            track.Add(new NAudio.Midi.TextEvent("PART DRUMS", MetaEventType.SequenceTrackName, 0));
+
+            // Standard mix events (From RBN template)
+            track.Add(new NAudio.Midi.TextEvent("[mix 0 drums0]", MetaEventType.TextEvent, 0));
+            track.Add(new NAudio.Midi.TextEvent("[mix 1 drums0]", MetaEventType.TextEvent, 0));
+            track.Add(new NAudio.Midi.TextEvent("[mix 2 drums0]", MetaEventType.TextEvent, 0));
+            track.Add(new NAudio.Midi.TextEvent("[mix 3 drums0]", MetaEventType.TextEvent, 0));
+
+            foreach (var entry in xmk.Entries)
+            {
+                long start = GetAbsoluteTime(entry.Start * 1000);
+                long end = GetAbsoluteTime(entry.End * 1000);
+                int velocity = 100;
+
+                // Text event?
+                if (!string.IsNullOrEmpty(entry.Text)) continue; // Don't write text events
+                if ((end - start) <= 0 || entry.Pitch > 127) continue;
+
+                int pitchRemap = map[entry.Pitch];
+                if (pitchRemap == -1) continue;
+
+                track.Add(new NoteEvent(start, 1, MidiCommandCode.NoteOn, pitchRemap, velocity));
+                track.Add(new NoteEvent(end, 1, MidiCommandCode.NoteOff, pitchRemap, velocity));
+            }
+
+            // Adds play event
+            var firstNote = track.Where(x => x is NoteEvent).Select(y => y as NoteEvent).OrderBy(y => y.AbsoluteTime).FirstOrDefault();
+            if (firstNote != null)
+            {
+                var idx = track.IndexOf(firstNote);
+                track.Insert(idx, new NAudio.Midi.TextEvent("[play]", MetaEventType.TextEvent, firstNote.AbsoluteTime));
+            }
+
+            // Adds idle event (end)
+            var lastNote = track.Where(x => x is NoteEvent).Select(y => y as NoteEvent).OrderByDescending(y => y.AbsoluteTime).FirstOrDefault();
+            if (lastNote != null)
+            {
+                var idx = track.IndexOf(lastNote);
+                track.Insert(idx, new NAudio.Midi.TextEvent("[idle]", MetaEventType.TextEvent, lastNote.AbsoluteTime));
             }
 
             // Adds end track
@@ -484,6 +568,22 @@ namespace Sharktooth.Xmk
 
                 track.Add(start);
                 track.Add(end);
+            }
+
+            // Adds play event
+            var firstNote = track.Where(x => x is NoteEvent).Select(y => y as NoteEvent).OrderBy(y => y.AbsoluteTime).FirstOrDefault();
+            if (firstNote != null)
+            {
+                var idx = track.IndexOf(firstNote);
+                track.Insert(idx, new NAudio.Midi.TextEvent("[play]", MetaEventType.TextEvent, firstNote.AbsoluteTime));
+            }
+
+            // Adds idle event (end)
+            var lastNote = track.Where(x => x is NoteEvent).Select(y => y as NoteEvent).OrderByDescending(y => y.AbsoluteTime).FirstOrDefault();
+            if (lastNote != null)
+            {
+                var idx = track.IndexOf(lastNote);
+                track.Insert(idx, new NAudio.Midi.TextEvent("[idle]", MetaEventType.TextEvent, lastNote.AbsoluteTime));
             }
 
             // Sort by absolute time (And ensure track name is first event)
