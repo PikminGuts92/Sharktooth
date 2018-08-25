@@ -34,6 +34,27 @@ namespace Sharktooth.Xmk
         public void Export(string path, bool remap = false)
         {
             MidiEventCollection mid = new MidiEventCollection(1, DELTA_TICKS_PER_QUARTER);
+            _xmks.Sort((x, y) => GetSortNumber(x.Name) - GetSortNumber(y.Name));
+
+            int GetSortNumber(string name)
+            {
+                switch (name)
+                {
+                    case "touchdrums":
+                        return 1;
+                    case "touchguitar":
+                        return 2;
+                    case "guitar_3x2":
+                        return 3;
+                    case "vocals":
+                        return 4;
+                    case "control":
+                        return 5;
+                    default:
+                        return 100;
+                }
+            }
+
             Xmk firstXmk = _xmks.FirstOrDefault();
             mid.AddTrack(CreateTempoTrack(firstXmk.TempoEntries, firstXmk.TimeSignatureEntries));
 
@@ -79,7 +100,7 @@ namespace Sharktooth.Xmk
                 // Generates up/down events for BEAT track (Needed for beat markers in CH and OD in RB)
                 mid.AddTrack(GenerateBeatTrack(firstXmk.TimeSignatureEntries, mid));
             }
-
+            
             MidiFile.Export(path, mid);
         }
 
