@@ -13,44 +13,34 @@ namespace Xmk2Mid
     {
         static void Main(string[] args)
         {
-            string inputPath, outputPath;
-
             if (args.Length < 1)
             {
                 // Display usage
-                Console.WriteLine("Usage: GHL2517.far output.mid");
+                Console.WriteLine("Usage: GHL2517[.far|.xmk]");
                 return;
             }
-            else if (args.Length == 1)
-            {
-                // Copies arguments
-                inputPath = args[0];
-                outputPath = ReplaceExtension(inputPath, ".mid");
-            }
-            else
-            {
-                inputPath = args[0];
-                outputPath = args[1];
-            }
-            
-            if (inputPath.EndsWith(".far", StringComparison.CurrentCultureIgnoreCase))
+
+            var farArgs = args.Where(x => x.EndsWith(".far", StringComparison.CurrentCultureIgnoreCase)).ToList();
+            var xmkArgs = args.Where(x => x.EndsWith(".xmk", StringComparison.CurrentCultureIgnoreCase)).ToList();
+
+            foreach (var farPath in farArgs)
             {
                 // Extracts xmk files from archive
                 FarArchive archive;
 
                 try
                 {
-                    archive = new FarArchive(inputPath);
+                    archive = new FarArchive(farPath);
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Unable to open archive because \"{ex.Message}\"");
+                    Console.WriteLine($"Unable to open \"{farPath}\" because \"{ex.Message}\"");
                     return;
                 }
 
                 var files = archive.GetAllFilesByExtension(".xmk");
                 List<Xmk> xmks = new List<Xmk>();
-                
+
                 // Reads in xmk files
                 foreach (FarEntry file in files)
                 {
@@ -61,28 +51,37 @@ namespace Xmk2Mid
                     }
                 }
 
-                if (xmks.Count > 0)
-                {
-                    // Converts XMK files
-                    XmkExport mid = new XmkExport(xmks);
-                    mid.Export(outputPath, true);
-                }
-                else
-                {
-                    Console.WriteLine("No xmk files were found in archive");
-                }
-                
+                ConvertXmks(xmks, ReplaceExtension(farPath, ".mid"));
                 archive.Dispose();
             }
-            else if (inputPath.EndsWith(".xmk", StringComparison.CurrentCultureIgnoreCase))
+
+            if (xmkArgs.Count > 0)
             {
-                // Directly converts XMK file
-                Xmk xmk = Xmk.FromFile(inputPath);
-                XmkExport mid = new XmkExport(xmk);
-                mid.Export(outputPath, true);
+                List<Xmk> xmks = new List<Xmk>();
+                string outputPath = xmkArgs.Count == 1 ?
+                    ReplaceExtension(xmkArgs[0], ".mid") :
+                    Path.Combine(Path.GetDirectoryName(xmkArgs.First()), "combinedFromXmks.mid");
+
+                // Reads in xmk files
+                foreach (var xmkPath in xmkArgs)
+                {
+                    using (var stream = File.OpenRead(xmkPath))
+                    {
+                        Xmk xmk = Xmk.FromStream(stream, Path.GetFileName(xmkPath));
+                        xmks.Add(xmk);
+                    }
+                }
+
+                // Uses directory of first xmk file
+                ConvertXmks(xmks, Path.Combine(Path.GetDirectoryName(xmkArgs.First()), outputPath));
             }
-            else
-                Console.WriteLine($"\"{Path.GetExtension(inputPath)}\" extension is unsupported. Must be either .xmk or .far");
+        }
+
+        static void ConvertXmks(List<Xmk> xmks, string outputPath)
+        {
+            // Converts XMK files
+            XmkExport mid = new XmkExport(xmks);
+            mid.Export(outputPath, true);
         }
 
         static string ReplaceExtension(string path, string extension)

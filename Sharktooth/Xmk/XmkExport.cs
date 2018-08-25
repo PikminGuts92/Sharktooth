@@ -66,6 +66,7 @@ namespace Sharktooth.Xmk
             }
             else
             {
+                var eventsIdx = -1;
                 for (int i = 0; i < _xmks.Count; i++)
                 {
                     Xmk xmk = _xmks[i];
@@ -77,6 +78,7 @@ namespace Sharktooth.Xmk
                         case "control":
                             // EVENTS
                             mid.AddTrack(ParseEvents(xmk));
+                            eventsIdx = i + 1;
                             continue;
                         case "guitar_3x2":
                             // PART GUITAR GHL
@@ -98,7 +100,39 @@ namespace Sharktooth.Xmk
 
                     mid.AddTrack(CreateTrack(xmk, i));
                 }
-                
+
+                // Updates EVENTS track
+                var firstPlay = mid.SelectMany(x => x)
+                    .Where(y => y is TextEvent && ((TextEvent)y).Text == "[play]")
+                    .OrderBy(z => z.AbsoluteTime)
+                    .FirstOrDefault();
+
+                var lastIdle = mid.SelectMany(x => x)
+                    .Where(y => y is TextEvent && ((TextEvent)y).Text == "[idle]")
+                    .OrderByDescending(z => z.AbsoluteTime)
+                    .FirstOrDefault();
+
+                if (eventsIdx != -1 && firstPlay != null)
+                {
+                    var events = mid[eventsIdx];
+                    var nextEvent = events.OrderBy(x => x.AbsoluteTime).First(y => y.AbsoluteTime > firstPlay.AbsoluteTime);
+                    var nextEventIdx = events.IndexOf(nextEvent);
+
+                    events.Insert(nextEventIdx, new TextEvent("[music_start]", MetaEventType.TextEvent, firstPlay.AbsoluteTime));
+                }
+
+                if (eventsIdx != -1 && lastIdle != null)
+                {
+                    var events = mid[eventsIdx];
+                    var trackEnd = events.Last();
+                    trackEnd.AbsoluteTime = lastIdle.AbsoluteTime; // Updates end track position
+                    events.Remove(trackEnd);
+                    
+                    events.Add(new TextEvent("[music_end]", MetaEventType.TextEvent, lastIdle.AbsoluteTime));
+                    events.Add(new TextEvent("[end]", MetaEventType.TextEvent, lastIdle.AbsoluteTime));
+                    events.Add(trackEnd); // Adds end track back
+                }
+
                 // Generates up/down events for BEAT track (Needed for beat markers in CH and OD in RB)
                 mid.AddTrack(GenerateBeatTrack(firstXmk.TimeSignatureEntries, mid));
             }
@@ -541,7 +575,7 @@ namespace Sharktooth.Xmk
                     phraseEvents.Add(new NoteEvent(end, 1, MidiCommandCode.NoteOff, VOCALS_PHRASE, velocity));
                 }
             }
-            
+
             // Extends phrases
             for (int i = 1; i < phraseEvents.Count - 1; i += 2)
             {
@@ -551,7 +585,7 @@ namespace Sharktooth.Xmk
             }
 
             // Extends last phrase
-            phraseEvents.Last().AbsoluteTime = Math.Max(phraseEvents.Last().AbsoluteTime, track.Max(x => x.AbsoluteTime));
+            phraseEvents.Last().AbsoluteTime = Math.Max(phraseEvents.Last().AbsoluteTime, track.Max(x => x.AbsoluteTime)) + DELTA_TICKS_PER_QUARTER / 8;
 
             // Shrinks phrases
             for (int i = 0; i < phraseEvents.Count; i += 2)
@@ -562,7 +596,7 @@ namespace Sharktooth.Xmk
                 var betweenNotes = track.Where(x => x.AbsoluteTime >= start.AbsoluteTime && x.AbsoluteTime < end.AbsoluteTime).ToList();
                 if (betweenNotes.Count <= 0)
                     continue; // No notes between phrases
-
+                
                 start.AbsoluteTime = betweenNotes.Min(x => x.AbsoluteTime) - (DELTA_TICKS_PER_QUARTER / 8); // 1/32 note
                 end.AbsoluteTime = betweenNotes.Max(x => x.AbsoluteTime) + (DELTA_TICKS_PER_QUARTER / 8); // 1/32 note
 
