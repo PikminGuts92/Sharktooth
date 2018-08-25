@@ -452,7 +452,7 @@ namespace Sharktooth.Xmk
 
                 long start = GetAbsoluteTime(entry.Start * 1000);
                 long end = GetAbsoluteTime(entry.End * 1000);
-                string text = $"[section {entry.Text}]";
+                string text = GetPracticeName(entry.Text);
                 
                 track.Add(new NAudio.Midi.TextEvent(text, MetaEventType.TextEvent, start));
             }
@@ -460,6 +460,16 @@ namespace Sharktooth.Xmk
             // Adds end track
             track.Add(new MetaEvent(MetaEventType.EndTrack, 0, track.Last().AbsoluteTime));
             return track;
+        }
+
+        private static string GetPracticeName(string practiceValue)
+        {
+            // Returns known practice section if matched
+            var key = practiceValue.Trim().ToLower();
+            if (Global.PracticeSections.ContainsKey(key))
+                return Global.PracticeSections[key];
+
+            return $"[section {practiceValue}]";
         }
     }
 }
