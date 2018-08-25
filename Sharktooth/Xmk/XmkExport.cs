@@ -300,8 +300,8 @@ namespace Sharktooth.Xmk
                 int velocity = 100;
 
                 // Text event?
-                if (!string.IsNullOrEmpty(entry.Text))
-                    track.Add(new NAudio.Midi.TextEvent(entry.Text, MetaEventType.TextEvent, start));
+                if (!string.IsNullOrEmpty(entry.Text)) continue; // Don't write text events
+                    //track.Add(new NAudio.Midi.TextEvent(entry.Text, MetaEventType.TextEvent, start));
 
                 if ((end - start) <= 0 || entry.Pitch > 127) continue;
 
@@ -394,8 +394,8 @@ namespace Sharktooth.Xmk
                 int velocity = 100;
 
                 // Text event?
-                if (!string.IsNullOrEmpty(entry.Text))
-                    track.Add(new NAudio.Midi.TextEvent(entry.Text, MetaEventType.TextEvent, start));
+                if (!string.IsNullOrEmpty(entry.Text)) continue; // Don't write text events
+                    //track.Add(new NAudio.Midi.TextEvent(entry.Text, MetaEventType.TextEvent, start));
 
                 if ((end - start) <= 0 || entry.Pitch > 127) continue;
                 
@@ -419,6 +419,8 @@ namespace Sharktooth.Xmk
             const int VOCALS_PHRASE = 105;
             //const int VOCALS_MAX_PITCH = 84;
             const int VOCALS_MIN_PITCH = 36;
+
+            var phraseEvents = new List<NoteEvent>();
 
             foreach (var entry in xmk.Entries)
             {
@@ -451,10 +453,43 @@ namespace Sharktooth.Xmk
                     if ((end - start) <= 0)
                         end = start + DELTA_TICKS_PER_QUARTER / 4; // 1/16 note
 
-                    track.Add(new NoteEvent(start, 1, MidiCommandCode.NoteOn, VOCALS_PHRASE, velocity));
-                    track.Add(new NoteEvent(end, 1, MidiCommandCode.NoteOff, VOCALS_PHRASE, velocity));
+                    phraseEvents.Add(new NoteEvent(start, 1, MidiCommandCode.NoteOn, VOCALS_PHRASE, velocity));
+                    phraseEvents.Add(new NoteEvent(end, 1, MidiCommandCode.NoteOff, VOCALS_PHRASE, velocity));
                 }
             }
+            
+            // Extends phrases
+            for (int i = 1; i < phraseEvents.Count - 1; i += 2)
+            {
+                // i = end, i+1 = start
+                var endTime = phraseEvents[i + 1].AbsoluteTime;
+                phraseEvents[i].AbsoluteTime = endTime;
+            }
+
+            // Extends last phrase
+            phraseEvents.Last().AbsoluteTime = Math.Max(phraseEvents.Last().AbsoluteTime, track.Max(x => x.AbsoluteTime));
+
+            // Shrinks phrases
+            for (int i = 0; i < phraseEvents.Count; i += 2)
+            {
+                NoteEvent start = phraseEvents[i];
+                NoteEvent end = phraseEvents[i + 1];
+
+                var betweenNotes = track.Where(x => x.AbsoluteTime >= start.AbsoluteTime && x.AbsoluteTime < end.AbsoluteTime).ToList();
+                if (betweenNotes.Count <= 0)
+                    continue; // No notes between phrases
+
+                start.AbsoluteTime = betweenNotes.Min(x => x.AbsoluteTime) - (DELTA_TICKS_PER_QUARTER / 8); // 1/32 note
+                end.AbsoluteTime = betweenNotes.Max(x => x.AbsoluteTime) + (DELTA_TICKS_PER_QUARTER / 8); // 1/32 note
+
+                track.Add(start);
+                track.Add(end);
+            }
+
+            // Sort by absolute time (And ensure track name is first event)
+            track.Sort((x, y) => (int)(x is NAudio.Midi.TextEvent
+                                       && ((NAudio.Midi.TextEvent)x).MetaEventType == MetaEventType.SequenceTrackName
+                                       ? int.MinValue : x.AbsoluteTime - y.AbsoluteTime));
 
             // Adds end track
             track.Add(new MetaEvent(MetaEventType.EndTrack, 0, track.Last().AbsoluteTime));
