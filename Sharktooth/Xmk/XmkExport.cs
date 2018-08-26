@@ -593,12 +593,17 @@ namespace Sharktooth.Xmk
                 NoteEvent start = phraseEvents[i];
                 NoteEvent end = phraseEvents[i + 1];
 
-                var betweenNotes = track.Where(x => x.AbsoluteTime >= start.AbsoluteTime && x.AbsoluteTime < end.AbsoluteTime).ToList();
+                var betweenNotes = track.Where(x => x.AbsoluteTime >= start.AbsoluteTime && x.AbsoluteTime <= end.AbsoluteTime).ToList();
                 if (betweenNotes.Count <= 0)
                     continue; // No notes between phrases
                 
-                start.AbsoluteTime = betweenNotes.Min(x => x.AbsoluteTime) - (DELTA_TICKS_PER_QUARTER / 8); // 1/32 note
-                end.AbsoluteTime = betweenNotes.Max(x => x.AbsoluteTime) + (DELTA_TICKS_PER_QUARTER / 8); // 1/32 note
+                start.AbsoluteTime = betweenNotes
+                    .Where(x => x is NoteEvent && ((NoteEvent)x).CommandCode == MidiCommandCode.NoteOn)
+                    .Min(y => y.AbsoluteTime) - (DELTA_TICKS_PER_QUARTER / 32); // 1/128 note
+
+                end.AbsoluteTime = betweenNotes
+                    .Where(x => x is NoteEvent && ((NoteEvent)x).CommandCode == MidiCommandCode.NoteOff)
+                    .Max(x => x.AbsoluteTime) + (DELTA_TICKS_PER_QUARTER / 32); // 1/128 note
 
                 track.Add(start);
                 track.Add(end);
