@@ -593,17 +593,28 @@ namespace Sharktooth.Xmk
                 NoteEvent start = phraseEvents[i];
                 NoteEvent end = phraseEvents[i + 1];
 
-                var betweenNotes = track.Where(x => x.AbsoluteTime >= start.AbsoluteTime && x.AbsoluteTime <= end.AbsoluteTime).ToList();
+                var betweenNotes = track.Where(x => x is NoteEvent
+                    && ((NoteEvent)x).NoteNumber != VOCALS_PHRASE
+                    && x.AbsoluteTime >= start.AbsoluteTime
+                    && x.AbsoluteTime <= end.AbsoluteTime).ToList();
+
                 if (betweenNotes.Count <= 0)
                     continue; // No notes between phrases
-                
-                start.AbsoluteTime = betweenNotes
-                    .Where(x => x is NoteEvent && ((NoteEvent)x).CommandCode == MidiCommandCode.NoteOn)
-                    .Min(y => y.AbsoluteTime) - (DELTA_TICKS_PER_QUARTER / 32); // 1/128 note
 
-                end.AbsoluteTime = betweenNotes
-                    .Where(x => x is NoteEvent && ((NoteEvent)x).CommandCode == MidiCommandCode.NoteOff)
-                    .Max(x => x.AbsoluteTime) + (DELTA_TICKS_PER_QUARTER / 32); // 1/128 note
+                var startEvent = betweenNotes
+                    .Where(x => ((NoteEvent)x).CommandCode == MidiCommandCode.NoteOn)
+                    .OrderBy(y => y.AbsoluteTime).FirstOrDefault();
+
+                var endEvent = betweenNotes
+                    .Where(x => ((NoteEvent)x).CommandCode == MidiCommandCode.NoteOff)
+                    .OrderBy(y => y.AbsoluteTime).LastOrDefault();
+
+                if (startEvent == null || endEvent == null || startEvent.AbsoluteTime > endEvent.AbsoluteTime)
+                    continue; // No full notes between phrases
+
+                // 1/128th note
+                start.AbsoluteTime = startEvent.AbsoluteTime - (DELTA_TICKS_PER_QUARTER / 32);
+                end.AbsoluteTime = endEvent.AbsoluteTime + (DELTA_TICKS_PER_QUARTER / 32);
 
                 track.Add(start);
                 track.Add(end);
