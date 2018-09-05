@@ -584,8 +584,20 @@ namespace Sharktooth.Xmk
                 phraseEvents[i].AbsoluteTime = endTime;
             }
 
-            // Extends last phrase
-            phraseEvents.Last().AbsoluteTime = Math.Max(phraseEvents.Last().AbsoluteTime, track.Max(x => x.AbsoluteTime)) + DELTA_TICKS_PER_QUARTER / 8;
+            if (phraseEvents.Count > 0)
+            {
+                // Extends first phrase
+                phraseEvents.First().AbsoluteTime = 0;
+
+                // Extends last phrase
+                phraseEvents.Last().AbsoluteTime = Math.Max(phraseEvents.Last().AbsoluteTime, track.Max(x => x.AbsoluteTime)) + DELTA_TICKS_PER_QUARTER / 8;
+            }
+            else
+            {
+                // No phrases found (Create one)
+                phraseEvents.Add(new NoteEvent(0, 1, MidiCommandCode.NoteOn, VOCALS_PHRASE, 100));
+                phraseEvents.Add(new NoteEvent(track.Max(x => x.AbsoluteTime) + DELTA_TICKS_PER_QUARTER / 8, 1, MidiCommandCode.NoteOff, VOCALS_PHRASE, 100));
+            }
 
             // Shrinks phrases
             for (int i = 0; i < phraseEvents.Count; i += 2)
