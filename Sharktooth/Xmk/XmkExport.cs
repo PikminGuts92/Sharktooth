@@ -341,7 +341,7 @@ namespace Sharktooth.Xmk
 
                 if ((end - start) <= 0 || entry.Pitch > 127) continue;
 
-                if (entry.Unknown2 == 2)
+                if ((entry.Unknown2 & 2) == 2) // Observed 0x02, 0xCA
                 {
                     // Barre chord
                     int shift = (entry.Pitch % 2 == 1) ? 1 : -1;
