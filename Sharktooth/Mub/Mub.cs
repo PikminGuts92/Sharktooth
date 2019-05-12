@@ -32,7 +32,6 @@ namespace Sharktooth.Mub
         {
             Version = 1;
             Entries = new List<MubEntry>();
-            StringBlob = null;
         }
 
         public static Mub FromFile(string path)
@@ -49,7 +48,7 @@ namespace Sharktooth.Mub
             Mub mub = new Mub();
 
             mub.Version = ar.ReadInt32();
-            mub.Hash = ar.ReadInt32();
+            ar.BaseStream.Position += 4; // CRC-32 hash
 
             int entryCount = ar.ReadInt32(), entrySize = entryCount * 16;
             int blobSize = ar.ReadInt32();
@@ -57,8 +56,8 @@ namespace Sharktooth.Mub
 
             // Reads in strings
             ar.BaseStream.Seek(entrySize, SeekOrigin.Current);
-            mub.StringBlob = ar.ReadBytes(blobSize);
-            Dictionary<long, string> words = ParseBlob(mub.StringBlob, entrySize);
+            var stringBlob = ar.ReadBytes(blobSize);
+            Dictionary<long, string> words = ParseBlob(stringBlob, entrySize);
             ar.BaseStream.Seek(startOffset, SeekOrigin.Begin);
 
             // Reads entries
@@ -73,6 +72,88 @@ namespace Sharktooth.Mub
             }
             
             return mub;
+        }
+
+        public void ToStream(Stream stream)
+        {
+            long startOffset;
+            int size;
+
+            var data = CreateData();
+            // TODO: Calculate new hash from data
+
+            var aw = new AwesomeWriter(stream, true);
+            startOffset = stream.Position;
+
+            aw.Write((int)Version);
+            aw.Write((int)0); // CRC-32 hash
+
+            aw.Write(data);
+            size = (int)(stream.Position - startOffset);
+            if (size % 4 != 0)
+            {
+                // Write byte difference
+                var remain = new byte[4 - (size % 4)];
+                aw.Write(remain);
+            }
+        }
+
+        private byte[] CreateData()
+        {
+            var stringBlob = CreateStringBlob(out var stringOffsets);
+            
+            using (var ms = new MemoryStream())
+            {
+                using (var aw = new AwesomeWriter(ms, true))
+                {
+                    // Writes entry count + blob size
+                    aw.Write((int)Entries.Count);
+                    aw.Write((int)stringBlob.Length);
+
+                    // Writes entries
+                    foreach (var entry in Entries)
+                    {
+                        aw.Write((float)entry.Start);
+                        aw.Write((int)entry.Modifier);
+                        aw.Write((float)entry.Length);
+                        aw.Write(stringOffsets.ContainsKey(entry.Text) ? stringOffsets[entry.Text] : 0);
+                    }
+
+                    // Writes string blob
+                    aw.Write(stringBlob);
+                }
+
+                return ms.ToArray();
+            }
+        }
+
+        private byte[] CreateStringBlob(out Dictionary<string, int> offsets)
+        {
+            var strings = Entries
+                .Select(x => x.Text)
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Distinct()
+                .ToList();
+
+            int idx = 0;
+            byte[] data;
+
+            offsets = new Dictionary<string, int>();
+
+            using (var ms = new MemoryStream())
+            {
+                foreach (var str in strings)
+                {
+                    data = Encoding.UTF8.GetBytes(str);
+                    ms.Write(data, 0, data.Length);
+                    ms.WriteByte(0x00);
+
+                    offsets.Add(str, idx);
+                    idx += data.Length + 1;
+                }
+
+                return ms.ToArray();
+            }
         }
 
         private static Dictionary<long, string> ParseBlob(byte[] blob, long offset)
@@ -94,8 +175,6 @@ namespace Sharktooth.Mub
         }
 
         public int Version { get; set; }
-        public int Hash { get; set; }
         public List<MubEntry> Entries { get; set; }
-        public byte[] StringBlob { get; set; }
     }
 }
