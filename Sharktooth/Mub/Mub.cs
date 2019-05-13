@@ -94,7 +94,7 @@ namespace Sharktooth.Mub
             return mub;
         }
 
-        public void ToStream(Stream stream)
+        public void WriteToStream(Stream stream)
         {
             long startOffset;
             int size;
@@ -115,6 +115,17 @@ namespace Sharktooth.Mub
                 // Write byte difference
                 var remain = new byte[4 - (size % 4)];
                 aw.Write(remain);
+            }
+        }
+
+        public void WriteToFile(string path)
+        {
+            if (!Directory.Exists(Path.GetDirectoryName(path)))
+                Directory.CreateDirectory(Path.GetDirectoryName(path));
+
+            using (var fs = File.OpenWrite(path))
+            {
+                WriteToStream(fs);
             }
         }
 

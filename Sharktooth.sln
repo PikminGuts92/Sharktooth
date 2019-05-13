@@ -16,6 +16,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Libraries", "Libraries", "{
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Xmk2Mid", "Xmk2Mid\Xmk2Mid.csproj", "{E66963E1-26FF-4B02-8311-58B9BEEBB01B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mid2Mub", "Mid2Mub\Mid2Mub.csproj", "{CEE0545F-7776-4FE6-B255-7EE1FE4090B2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -34,6 +36,10 @@ Global
 		{E66963E1-26FF-4B02-8311-58B9BEEBB01B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E66963E1-26FF-4B02-8311-58B9BEEBB01B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E66963E1-26FF-4B02-8311-58B9BEEBB01B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CEE0545F-7776-4FE6-B255-7EE1FE4090B2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CEE0545F-7776-4FE6-B255-7EE1FE4090B2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CEE0545F-7776-4FE6-B255-7EE1FE4090B2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CEE0545F-7776-4FE6-B255-7EE1FE4090B2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -24,7 +24,8 @@ namespace Sharktooth.Mub
 
             var noteTrack = existingTracks.Keys
                 .Where(x => x == "NOTES")
-                .Select(x => existingTracks[x]);
+                .Select(x => existingTracks[x])
+                .FirstOrDefault();
 
             if (noteTrack == null)
                 throw new Exception("Can't find \"NOTES\" midi track");
@@ -42,9 +43,9 @@ namespace Sharktooth.Mub
                 if (note.NoteNumber <= 0)
                     continue;
 
-                mubNotes.Add(new MubEntry((note.AbsoluteTime / DeltaTicksPerQuarter),
+                mubNotes.Add(new MubEntry((note.AbsoluteTime / (DeltaTicksPerQuarter * 4)),
                     note.NoteNumber,
-                    (note.NoteLength / DeltaTicksPerQuarter)));
+                    (note.NoteLength / (DeltaTicksPerQuarter * 4))));
             }
 
             var metaEvents = noteTrack
@@ -55,7 +56,7 @@ namespace Sharktooth.Mub
 
             foreach (var textNote in metaEvents)
             {
-                mubNotes.Add(new MubEntry((textNote.AbsoluteTime / DeltaTicksPerQuarter),
+                mubNotes.Add(new MubEntry((textNote.AbsoluteTime / (DeltaTicksPerQuarter * 4)),
                     0x09_FF_FF_FF,
                     0.0f,
                     textNote.Text));
@@ -66,6 +67,8 @@ namespace Sharktooth.Mub
                 Version = 2,
                 Entries = mubNotes
                     .OrderBy(x => x.Start)
+                    .ThenByDescending(x => x.Modifier >> 24)
+                    .ThenBy(x => x.Modifier & 0xFF)
                     .ToList()
             };
         }
