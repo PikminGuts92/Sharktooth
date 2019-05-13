@@ -167,7 +167,7 @@ namespace Sharktooth.Mub
                 .Distinct()
                 .ToList();
 
-            int idx = 0;
+            int idx = Entries.Count * 16;
             byte[] data;
 
             offsets = new Dictionary<string, int>();
