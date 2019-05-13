@@ -40,7 +40,7 @@ namespace Sharktooth.Mub
 
             foreach (var note in notes)
             {
-                if (note.NoteNumber <= 0)
+                if (note.Velocity <= 0)
                     continue;
 
                 mubNotes.Add(new MubEntry((note.AbsoluteTime / (DeltaTicksPerQuarter * 4)),
