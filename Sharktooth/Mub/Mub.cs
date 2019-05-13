@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.IO;
+using Force.Crc32;
 
 /*
  * HEADER (16 bytes)
@@ -100,13 +101,13 @@ namespace Sharktooth.Mub
             int size;
 
             var data = CreateData();
-            // TODO: Calculate new hash from data
+            var hash = Crc32Algorithm.Compute(data);
 
             var aw = new AwesomeWriter(stream, true);
             startOffset = stream.Position;
 
             aw.Write((int)Version);
-            aw.Write((int)0); // CRC-32 hash
+            aw.Write((int)hash); // CRC-32 hash
 
             aw.Write(data);
             size = (int)(stream.Position - startOffset);
