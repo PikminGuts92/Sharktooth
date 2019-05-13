@@ -9,9 +9,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mub2Mid", "Mub2Mid\Mub2Mid.
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Libraries", "Libraries", "{323452C4-526D-4D31-9A8C-09766FD7D905}"
 	ProjectSection(SolutionItems) = preProject
+		Libraries\Crc32NET_LICENSE = Libraries\Crc32NET_LICENSE
 		Libraries\GameArchives.dll = Libraries\GameArchives.dll
 		Libraries\GameArchives_LICENSE = Libraries\GameArchives_LICENSE
 		Libraries\GameArchives_README.md = Libraries\GameArchives_README.md
+		Libraries\NAudio_LICENSE = Libraries\NAudio_LICENSE
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Xmk2Mid", "Xmk2Mid\Xmk2Mid.csproj", "{E66963E1-26FF-4B02-8311-58B9BEEBB01B}"
