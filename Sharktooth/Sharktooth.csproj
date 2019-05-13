@@ -57,6 +57,7 @@
     <Compile Include="Mub\MubExport.cs" />
     <Compile Include="Mub\Mub.cs" />
     <Compile Include="Mub\MubEntry.cs" />
+    <Compile Include="Mub\MubImport.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TempoIndex.cs" />
     <Compile Include="Xmk\Xmk.cs" />

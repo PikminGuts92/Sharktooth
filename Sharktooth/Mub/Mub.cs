@@ -19,9 +19,29 @@ using System.IO;
  * ================
  * FLOAT - Start (0-index)
  * INT32 - Pitch / Identifier
+ *  [0] Type
+ *   0x00 - Note
+ *   0x01
+ *   0x02 ^^
+ *   0x03 ^
+ *   0x04 ^^
+ *   0x05
+ *   0x09 - Section ^^
+ *   0x0A - Author ^^
+ *   0x0C
+ *   0x0D
+ *     ^ = Sometimes FF'd
+ *    ^^ = FF'd
+ *  [1]
+ *  [2]
+ *  [3] Pitch
  * FLOAT - Length
  * INT32 - Text Pointer (Usually 0)
  * 	Pointer to text value in blob, starting from first entry
+ *
+ * 0x0A
+ *  <PlayAnim on="Peripheral2" anim="p_punch_air_01" start="0" />
+ *  <StopAnim on="Peripheral2"
  */
 
 namespace Sharktooth.Mub
