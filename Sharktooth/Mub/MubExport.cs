@@ -29,8 +29,12 @@ namespace Sharktooth.Mub
         private List<MidiEvent> CreateTempoTrack()
         {
             List<MidiEvent> track = new List<MidiEvent>();
+
+            // These are redundant but ehh
             track.Add(new NAudio.Midi.TextEvent("mubTempo", MetaEventType.SequenceTrackName, 0));
-            
+            track.Add(new TimeSignatureEvent(0, 4, 2, 24, 8)); // 4/4 ts
+            track.Add(new TempoEvent(500000, 0)); // 120 bpm
+
             // Adds end track
             track.Add(new MetaEvent(MetaEventType.EndTrack, 0, track.Last().AbsoluteTime));
             return track;
@@ -68,6 +72,16 @@ namespace Sharktooth.Mub
                 track.Add(new NoteEvent(start, 1, MidiCommandCode.NoteOn, entry.Modifier & 0xFF, 100));
                 track.Add(new NoteEvent(end, 1, MidiCommandCode.NoteOff, entry.Modifier & 0xFF, 100));
             }
+
+            track.Sort((x, y) =>
+            {
+                if (x.AbsoluteTime < y.AbsoluteTime)
+                    return -1;
+                else if (x.AbsoluteTime > y.AbsoluteTime)
+                    return 1;
+                else
+                    return 0;
+            });
 
             // Adds end track
             track.Add(new MetaEvent(MetaEventType.EndTrack, 0, track.Last().AbsoluteTime));
