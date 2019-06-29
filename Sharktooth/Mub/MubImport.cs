@@ -10,17 +10,49 @@ namespace Sharktooth.Mub
     public class MubImport
     {
         private MidiFile _mid;
+        private List<MubTempoMarker> tempoMarkers;
 
         public MubImport(string midPath)
         {
             _mid = new MidiFile(midPath);
         }
-        
+
+        private double NoteTicksToPos(long ticks, bool useTempoMarkers = true)
+        {
+            double ticksPerMeasure = DeltaTicksPerQuarter * 4; // Assume 4/4
+            double pos = ticks / ticksPerMeasure;
+
+            if (useTempoMarkers && tempoMarkers != null)
+            {
+                for (int i = 0; i < tempoMarkers.Count; ++i)
+                {
+                    if (i == tempoMarkers.Count - 1 || tempoMarkers[i + 1].BeatPos > pos)
+                    {
+                        return tempoMarkers[i].GetAbsolutePos(pos);
+                    }
+                }
+                throw new Exception("Error converting note position using tempo markers");
+            }
+            return pos;
+        }
+
         public Mub ExportToMub()
         {
-            var existingTracks = _mid.Events
-                .Skip(1)
-                .ToDictionary(x => GetTrackName(x), y => y);
+            Dictionary<string, IList<MidiEvent>> existingTracks;
+            try
+            {
+                existingTracks = _mid.Events
+                    .Skip(1)
+                    .ToDictionary(x => GetTrackName(x), y => y);
+            }
+            catch (NullReferenceException)
+            {
+                throw new Exception("MIDI track is missing a \"NOTES\" or \"EFFECTS\" track name text event");
+            }
+
+            var tempoTrack = _mid.Events[0];
+            int chartUsPerQuarterNote = 0;
+            float bpm = 0;
 
             var noteTrack = existingTracks.Keys
                 .Where(x => x == "NOTES")
@@ -34,32 +66,160 @@ namespace Sharktooth.Mub
 
             var mubNotes = new List<MubEntry>();
 
+            var bpmEvents = noteTrack
+                .Where(x => x is TextEvent te
+                    && (te.MetaEventType == MetaEventType.CuePoint))
+                .Select(x => x as TextEvent);
+
+            // Look for BPM Cue text event
+            foreach (var textNote in bpmEvents)
+            {
+                if (bpm != 0)
+                {
+                    throw new Exception("Too many Cue (BPM) events");
+                }
+                try
+                {
+                    bpm = float.Parse(textNote.Text, System.Globalization.CultureInfo.InvariantCulture);
+                    if (bpm <= 0)
+                    {
+                        throw new Exception("BPM cannot be 0 or negative");
+                    }
+                    chartUsPerQuarterNote = (int)Math.Round(60000000 / bpm);
+                }
+                catch (FormatException)
+                {
+                    throw new Exception($"Invalid BPM found in Cue TextEvent: {textNote.Text}");
+                }
+            }
+
+            var tempoEvents = tempoTrack
+            .Where(x => x is TempoEvent ts)
+            .Select(x => x as TempoEvent);
+
+            // Make tempomap
+            foreach (var tempoEvent in tempoEvents)
+            {
+                double pos = NoteTicksToPos(tempoEvent.AbsoluteTime, false);
+                int usPerQuarterNote = tempoEvent.MicrosecondsPerQuarterNote;
+                if (tempoMarkers == null)
+                {
+                    tempoMarkers = new List<MubTempoMarker>();
+                    if (bpm == 0)
+                    {
+                        chartUsPerQuarterNote = usPerQuarterNote;
+                        bpm = (float)60000000 / chartUsPerQuarterNote;
+                        mubNotes.Add(new MubEntry(0.0f,
+                        0x0B_00_00_02,
+                        0.0f,
+                        BitConverter.ToInt32(BitConverter.GetBytes(bpm), 0)));
+                    }
+                }
+                tempoMarkers.Add(new MubTempoMarker(pos, usPerQuarterNote, chartUsPerQuarterNote));
+            }
+            if (tempoMarkers != null)
+            {
+                tempoMarkers.Sort((x, y) =>
+                {
+                    if (x.BeatPos < y.BeatPos)
+                        return -1;
+                    else if (x.BeatPos > y.BeatPos)
+                        return 1;
+                    else
+                        return 0;
+                });
+                MubTempoMarker temp;
+                for (int i = 0; i < tempoMarkers.Count; ++i)
+                {
+                    if (i > 0)
+                    {
+                        temp = tempoMarkers[i];
+                        temp.AbsolutePos = tempoMarkers[i - 1].GetAbsolutePos(tempoMarkers[i].BeatPos);
+                        tempoMarkers[i] = temp;
+                    }
+
+                    mubNotes.Add(new MubEntry((float)tempoMarkers[i].BeatPos,
+                    0x0B_00_00_01,
+                    0.0f,
+                    tempoMarkers[i].UsPerQuarterNote));
+                }
+            }
+
+            var metaEvents = noteTrack
+            .Where(x => x is TextEvent te
+                && (te.MetaEventType == MetaEventType.TextEvent
+                    || te.MetaEventType == MetaEventType.Lyric
+                    || te.MetaEventType == MetaEventType.Copyright
+                    || te.MetaEventType == MetaEventType.CuePoint))
+            .Select(x => x as TextEvent);
+
+            foreach (var textNote in metaEvents)
+            {
+                // Sections and Lyrics
+                if (textNote.MetaEventType == MetaEventType.TextEvent || textNote.MetaEventType == MetaEventType.Lyric)
+                {
+                    mubNotes.Add(new MubEntry((float)NoteTicksToPos(textNote.AbsoluteTime),
+                        0x09_FF_FF_FF,
+                        0.0f,
+                        0,
+                        textNote.Text));
+                }
+                // Author
+                else if (textNote.MetaEventType == MetaEventType.Copyright)
+                {
+                    mubNotes.Add(new MubEntry((float)NoteTicksToPos(textNote.AbsoluteTime),
+                    0x0A_FF_FF_FF,
+                    0.0f,
+                    0,
+                    textNote.Text));
+                }
+                // BPM
+                // don't include if there are no tempomarkers for some reason, since we can't guarantee
+                // the cue BPM & chart BPM are the same.
+                else if (textNote.MetaEventType == MetaEventType.CuePoint && tempoMarkers != null)
+                {
+                    mubNotes.Add(new MubEntry((float)NoteTicksToPos(textNote.AbsoluteTime),
+                    0x0B_00_00_02,
+                    0.0f,
+                    BitConverter.ToInt32(BitConverter.GetBytes(bpm),0)));
+                }
+            }
+
             var notes = noteTrack
                 .Where(x => x is NoteOnEvent)
                 .Select(x => x as NoteOnEvent);
 
             foreach (var note in notes)
             {
-                if (note.Velocity <= 0)
-                    continue;
-
-                mubNotes.Add(new MubEntry((note.AbsoluteTime / (DeltaTicksPerQuarter * 4)),
+                double start = NoteTicksToPos(note.AbsoluteTime);
+                double end = NoteTicksToPos(note.AbsoluteTime + note.NoteLength);
+                mubNotes.Add(new MubEntry((float)start,
                     note.NoteNumber,
-                    (note.NoteLength / (DeltaTicksPerQuarter * 4))));
+                    (float)(end - start),
+                    note.Velocity - 1));
             }
 
-            var metaEvents = noteTrack
-                .Where(x => x is TextEvent te
-                    && (te.MetaEventType == MetaEventType.TextEvent
-                        || te.MetaEventType == MetaEventType.Lyric))
-                .Select(x => x as TextEvent);
+            // DJ Hero 2 effects
+            var effectTrack = existingTracks.Keys
+                .Where(x => x == "EFFECTS")
+                .Select(x => existingTracks[x])
+                .FirstOrDefault();
 
-            foreach (var textNote in metaEvents)
+            if (effectTrack != null)
             {
-                mubNotes.Add(new MubEntry((textNote.AbsoluteTime / (DeltaTicksPerQuarter * 4)),
-                    0x09_FF_FF_FF,
-                    0.0f,
-                    textNote.Text));
+                var effects = effectTrack
+                    .Where(x => x is NoteOnEvent)
+                    .Select(x => x as NoteOnEvent);
+
+                foreach (var effect in effects)
+                {
+                    double start = NoteTicksToPos(effect.AbsoluteTime);
+                    double end = NoteTicksToPos(effect.AbsoluteTime + effect.NoteLength);
+                    mubNotes.Add(new MubEntry((float)start,
+                        effect.NoteNumber + 0x06_00_00_00,
+                        (float)(end - start),
+                        effect.Velocity - 1));
+                }
             }
 
             return new Mub()
@@ -81,6 +241,6 @@ namespace Sharktooth.Mub
             return (trackNameEv as TextEvent)?.Text;
         }
 
-        public float DeltaTicksPerQuarter => _mid.DeltaTicksPerQuarterNote;
+        public double DeltaTicksPerQuarter => _mid.DeltaTicksPerQuarterNote;
     }
 }
