@@ -185,6 +185,12 @@ namespace Sharktooth.Mub
                 }
             }
 
+            // 0xFFFFFFFF note at beginning of chart needed for DJH2 Beginner charts
+            mubNotes.Add(new MubEntry(0.0f,
+                                -1, // 0xFFFFFFFF
+                                0.0f,
+                                0));
+
             var notes = noteTrack
                 .Where(x => x is NoteOnEvent)
                 .Select(x => x as NoteOnEvent);

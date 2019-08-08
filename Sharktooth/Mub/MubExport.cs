@@ -155,6 +155,11 @@ namespace Sharktooth.Mub
                         {
                             track.Add(new NAudio.Midi.TextEvent(entry.Text, MetaEventType.Copyright, 0));
                         }
+                        // 0xFFFFFFFF?
+                        else if ((entry.Modifier & 0xFF000000) == 0xFF000000)
+                        {
+                            // ignore
+                        }
                         // Just a section
                         else
                         {
