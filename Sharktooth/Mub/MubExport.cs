@@ -53,8 +53,6 @@ namespace Sharktooth.Mub
             float chartBPM = 0;
             int chartUsPerQuarterNote = 500000; // 120 BPM
 
-            // These are redundant but ehh
-            track.Add(new NAudio.Midi.TextEvent("mubTempo", MetaEventType.SequenceTrackName, 0));
             track.Add(new TimeSignatureEvent(0, 4, 2, 24, 8)); // 4/4 ts
 
             // get chart BPM
