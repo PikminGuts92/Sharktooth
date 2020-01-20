@@ -153,28 +153,50 @@ namespace Sharktooth.Mub
                         {
                             track.Add(new NAudio.Midi.TextEvent(entry.Text, MetaEventType.Copyright, 0));
                         }
-                        // 0xFFFFFFFF?
-                        else if ((entry.Modifier & 0xFF000000) == 0xFF000000)
-                        {
-                            // ignore
-                        }
-                        // Just a section
-                        else
+                        // section
+                        else if ((entry.Modifier & 0xFF000000) == 0x09000000)
                         {
                             track.Add(new NAudio.Midi.TextEvent(entry.Text, MetaEventType.TextEvent, start));
                         }
+                        // unknown
+                        else
+                        {
+                            track.Add(new NAudio.Midi.TextEvent($"UNK_{entry.Modifier:X}_{entry.Text}", MetaEventType.Marker, start));
+                        }
+                    }
+                    // 0xFFFFFFFF?
+                    else if ((entry.Modifier & 0xFF000000) == 0xFF000000)
+                    {
+                        // ignore
+                    }
+                    else
+                    {
+                        track.Add(new NAudio.Midi.TextEvent($"UNK_{entry.Modifier:X}", MetaEventType.Marker, start));
                     }
                     continue;
                 }
 
+                // Lyric Marker
+                if ((entry.Modifier & 0xFFFFFF00) == 0x1100)
+                {
+                    string lyricMarker;
+                    int markerMod = entry.Modifier & 0xFF;
+                    if (markerMod == 1)
+                        lyricMarker = "LYRIC_PAGE";
+                    else if (markerMod == 3 || markerMod == 4)
+                        lyricMarker = "LYRIC_COLOR";
+                    else
+                        lyricMarker = $"LYRIC_UNK_{markerMod}";
+                    track.Add(new NAudio.Midi.TextEvent(lyricMarker, MetaEventType.Marker, start));
+                }
+
                 if (entry.Length <= 0) continue;
 
-                if (!string.IsNullOrEmpty(entry.Text))
+                // Lyric
+                if ((entry.Modifier & 0xFFFFFF00) == 0x1000)
                 {
-                    if ((entry.Modifier & 0xFF00) == 0x1000)
-                        track.Add(new NAudio.Midi.TextEvent(entry.Text, MetaEventType.Lyric, start)); // Lyric event?
-                    else
-                        track.Add(new NAudio.Midi.TextEvent(entry.Text, MetaEventType.TextEvent, start));
+                    if (!string.IsNullOrEmpty(entry.Text))
+                        track.Add(new NAudio.Midi.TextEvent(entry.Text, MetaEventType.Lyric, start));
                 }
 
                 int noteMod = entry.Modifier & 0xFF;

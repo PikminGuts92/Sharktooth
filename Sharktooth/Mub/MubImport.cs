@@ -148,15 +148,15 @@ namespace Sharktooth.Mub
             var metaEvents = noteTrack
             .Where(x => x is TextEvent te
                 && (te.MetaEventType == MetaEventType.TextEvent
-                    || te.MetaEventType == MetaEventType.Lyric
                     || te.MetaEventType == MetaEventType.Copyright
-                    || te.MetaEventType == MetaEventType.CuePoint))
+                    || te.MetaEventType == MetaEventType.CuePoint
+                    || te.MetaEventType == MetaEventType.Marker))
             .Select(x => x as TextEvent);
 
             foreach (var textNote in metaEvents)
             {
-                // Sections and Lyrics
-                if (textNote.MetaEventType == MetaEventType.TextEvent || textNote.MetaEventType == MetaEventType.Lyric)
+                // Sections
+                if (textNote.MetaEventType == MetaEventType.TextEvent)
                 {
                     mubNotes.Add(new MubEntry((float)NoteTicksToPos(textNote.AbsoluteTime),
                         0x09_FF_FF_FF,
@@ -183,13 +183,31 @@ namespace Sharktooth.Mub
                     0.0f,
                     BitConverter.ToInt32(BitConverter.GetBytes(bpm),0)));
                 }
+                // Lyric Page
+                else if (textNote.MetaEventType == MetaEventType.Marker && textNote.Text.ToUpper() == "LYRIC_PAGE")
+                {
+                    mubNotes.Add(new MubEntry((float)NoteTicksToPos(textNote.AbsoluteTime),
+                    0x00_00_11_01,
+                    0.0f,
+                    0));
+                }
             }
 
-            // 0xFFFFFFFF note at beginning of chart needed for DJH2 Beginner charts
+            // 0xFFFFFFFF note at beginning of chart needed
             mubNotes.Add(new MubEntry(0.0f,
                                 -1, // 0xFFFFFFFF
                                 0.0f,
                                 0));
+
+            var lyricEvents = new Queue<TextEvent>(noteTrack
+            .Where(x => x is TextEvent te
+                && (te.MetaEventType == MetaEventType.Lyric))
+            .Select(x => x as TextEvent));
+
+            var lyricColorEvents = new Queue<TextEvent>(noteTrack
+            .Where(x => x is TextEvent te
+                && (te.MetaEventType == MetaEventType.Marker && te.Text.ToUpper() == "LYRIC_COLOR"))
+            .Select(x => x as TextEvent));
 
             var notes = noteTrack
                 .Where(x => x is NoteOnEvent)
@@ -199,10 +217,45 @@ namespace Sharktooth.Mub
             {
                 double start = NoteTicksToPos(note.AbsoluteTime);
                 double end = NoteTicksToPos(note.AbsoluteTime + note.NoteLength);
+                int noteNumber = note.NoteNumber;
+                string lyricString = "";
+
+                if (noteNumber == 3 || noteNumber == 4)
+                {
+                    if (lyricColorEvents.Count > 0)
+                    {
+                        var lyricColor = lyricColorEvents.Peek();
+                        if (lyricColor.AbsoluteTime == note.AbsoluteTime)
+                        {
+                            lyricColorEvents.Dequeue();
+                            noteNumber += 0x1100;
+                        }
+                        else if (lyricColor.AbsoluteTime < note.AbsoluteTime)
+                        {
+                            throw new Exception($"LYRIC_COLOR marker not associated with a MIDI note: {NoteTicksToPos(lyricColor.AbsoluteTime, false) }");
+                        }
+                    }
+                }
+                else if (lyricEvents.Count > 0)
+                {
+                    var lyricEvent = lyricEvents.Peek();
+                    if (lyricEvent.AbsoluteTime == note.AbsoluteTime)
+                    {
+                        lyricString = lyricEvent.Text;
+                        lyricEvents.Dequeue();
+                        noteNumber += 0x1000;
+                    }
+                    else if (lyricEvent.AbsoluteTime < note.AbsoluteTime)
+                    {
+                        throw new Exception($"Lyric \"{lyricEvent.Text}\"not associated with a MIDI note: {NoteTicksToPos(lyricEvent.AbsoluteTime, false) }");
+                    }
+                }
+
                 mubNotes.Add(new MubEntry((float)start,
-                    note.NoteNumber,
+                    noteNumber,
                     (float)(end - start),
-                    note.Velocity - 1));
+                    note.Velocity - 1,
+                    lyricString));
             }
 
             // DJ Hero 2 effects
