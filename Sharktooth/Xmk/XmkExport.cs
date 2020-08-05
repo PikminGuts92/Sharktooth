@@ -197,27 +197,6 @@ namespace Sharktooth.Xmk
                 _tempoIdx.Add(idxEntry);
             }
 
-            long GetAbsoluteTime(double startTime, TempoIndex currentTempo)
-            {
-                double difference = startTime - currentTempo.RealTime;
-                long absoluteTicks = currentTempo.AbsoluteTime + (1000L * (long)difference * DELTA_TICKS_PER_QUARTER) / currentTempo.MicroPerQuarter;
-
-                // Applies quantization and snaps to grid
-                int q = DELTA_TICKS_PER_MEASURE / QUANTIZATION;
-                if (absoluteTicks % q != 0)
-                {
-                    long before = absoluteTicks % q;
-                    long after = q - before;
-
-                    if (before < after)
-                        absoluteTicks -= before;
-                    else
-                        absoluteTicks += after;
-                }
-
-                return absoluteTicks;
-            }
-
             // Adds tempo changes
             if (tempos.Count > 0)
             {
@@ -262,6 +241,27 @@ namespace Sharktooth.Xmk
             // Adds end track
             track.Add(new MetaEvent(MetaEventType.EndTrack, 0, track.Last().AbsoluteTime));
             return track;
+        }
+
+        long GetAbsoluteTime(double startTime, TempoIndex currentTempo)
+        {
+            double difference = startTime - currentTempo.RealTime;
+            long absoluteTicks = currentTempo.AbsoluteTime + (1000L * (long)difference * DELTA_TICKS_PER_QUARTER) / currentTempo.MicroPerQuarter;
+
+            // Applies quantization and snaps to grid
+            int q = DELTA_TICKS_PER_MEASURE / QUANTIZATION;
+            if (absoluteTicks % q != 0)
+            {
+                long before = absoluteTicks % q;
+                long after = q - before;
+
+                if (before < after)
+                    absoluteTicks -= before;
+                else
+                    absoluteTicks += after;
+            }
+
+            return absoluteTicks;
         }
 
         private long GetAbsoluteTime(double startTime)
