@@ -21,9 +21,7 @@ namespace Sharktooth.Mub
             MidiEventCollection mid = new MidiEventCollection(1, DELTA_TICKS_PER_QUARTER);
             mid.AddTrack(CreateTempoTrack());
             mid.AddTrack(CreateTrack());
-            List<MidiEvent> effectsTrack = CreateEffectsTrack();
-            if (effectsTrack != null)
-                mid.AddTrack(effectsTrack);
+            mid.AddTrack(CreateEffectsTrack());
 
             MidiFile.Export(path, mid);
         }
@@ -53,6 +51,7 @@ namespace Sharktooth.Mub
             float chartBPM = 0;
             int chartUsPerQuarterNote = 500000; // 120 BPM
 
+            track.Add(new NAudio.Midi.TextEvent("mubTempo", MetaEventType.SequenceTrackName, 0));
             track.Add(new TimeSignatureEvent(0, 4, 2, 24, 8)); // 4/4 ts
 
             // get chart BPM
@@ -230,7 +229,8 @@ namespace Sharktooth.Mub
 
         private List<MidiEvent> CreateEffectsTrack()
         {
-            List<MidiEvent> effects = null;
+            List<MidiEvent> effects = new List<MidiEvent>();
+            effects.Add(new NAudio.Midi.TextEvent("EFFECTS", MetaEventType.SequenceTrackName, 0));
 
             foreach (var entry in _mub.Entries)
             {
@@ -252,32 +252,24 @@ namespace Sharktooth.Mub
                         velocity = 1;
                     }
 
-                    if (effects == null)
-                    {
-                        effects = new List<MidiEvent>();
-                        effects.Add(new NAudio.Midi.TextEvent("EFFECTS", MetaEventType.SequenceTrackName, 0));
-                    }
                     effects.Add(new NoteEvent(start, 1, MidiCommandCode.NoteOn, effectMod, velocity));
                     effects.Add(new NoteEvent(end, 1, MidiCommandCode.NoteOff, effectMod, velocity));
                     continue;
                 }
             }
 
-            if (effects != null)
+            effects.Sort((x, y) =>
             {
-                effects.Sort((x, y) =>
-                {
-                    if (x.AbsoluteTime < y.AbsoluteTime)
-                        return -1;
-                    else if (x.AbsoluteTime > y.AbsoluteTime)
-                        return 1;
-                    else
-                        return 0;
-                });
+                if (x.AbsoluteTime < y.AbsoluteTime)
+                    return -1;
+                else if (x.AbsoluteTime > y.AbsoluteTime)
+                    return 1;
+                else
+                    return 0;
+            });
 
-                // Adds end track
-                effects.Add(new MetaEvent(MetaEventType.EndTrack, 0, effects.Last().AbsoluteTime));
-            }
+            // Adds end track
+            effects.Add(new MetaEvent(MetaEventType.EndTrack, 0, effects.Last().AbsoluteTime));
             return effects;
         }
     }
