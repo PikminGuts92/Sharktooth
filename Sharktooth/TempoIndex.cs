@@ -11,13 +11,14 @@ namespace Sharktooth
         public long AbsoluteTime;
         public double RealTime;
         public double BPM;
-        public int MicroPerQuarter => (int)(60000000 / BPM);
+        public int MicroPerQuarter;// (int)(60000000 / BPM)
 
-        public TempoIndex(long absTime, double realTime, double bpm)
+        public TempoIndex(long absTime, double realTime, double bpm, int mpq)
         {
             AbsoluteTime = absTime;
             RealTime = realTime;
             BPM = bpm;
+            MicroPerQuarter = mpq;
         }
     }
 }

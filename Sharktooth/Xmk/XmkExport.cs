@@ -11,7 +11,7 @@ namespace Sharktooth.Xmk
     {
         private const int DELTA_TICKS_PER_QUARTER = 480;
         private const int DELTA_TICKS_PER_MEASURE = DELTA_TICKS_PER_QUARTER * 4;
-        private const int QUANTIZATION = 128; // Should be power of 2
+        private const int QUANTIZATION = 384; // Should be 5 ticks of tolerance
 
         private readonly List<TempoIndex> _tempoIdx = new List<TempoIndex>();
         private List<Xmk> _xmks;
@@ -192,7 +192,7 @@ namespace Sharktooth.Xmk
 
             if (tempos.Count <= 0 || tempos[0].Start > 0.0f)
             {
-                var idxEntry = new TempoIndex(0, 0, 120);
+                var idxEntry = new TempoIndex(0, 0, 120, (60000000 / 120));
                 //track.Add(new NAudio.Midi.TempoEvent(idxEntry.MicroPerQuarter, idxEntry.AbsoluteTime));
                 _tempoIdx.Add(idxEntry);
             }
@@ -203,9 +203,10 @@ namespace Sharktooth.Xmk
                 var firstTempo = tempos.First();
                 var idxEntry = new TempoIndex()
                 {
-                    AbsoluteTime = _tempoIdx.Count > 0 ? GetAbsoluteTime(firstTempo.Start * 1000, _tempoIdx.Last()) : 0,
+                    AbsoluteTime = _tempoIdx.Count > 0 ? (firstTempo.Ticks / 2) : 0,
                     RealTime = firstTempo.Start * 1000,
-                    BPM = firstTempo.BPM
+                    BPM = firstTempo.BPM,
+                    MicroPerQuarter = (int)firstTempo.MicroPerQuarter
                 };
 
                 track.Add(new NAudio.Midi.TempoEvent(idxEntry.MicroPerQuarter, idxEntry.AbsoluteTime));
@@ -215,9 +216,10 @@ namespace Sharktooth.Xmk
                 {
                     idxEntry = new TempoIndex()
                     {
-                        AbsoluteTime = GetAbsoluteTime(tempoEntry.Start * 1000, _tempoIdx.Last()),
+                        AbsoluteTime = (tempoEntry.Ticks / 2),
                         RealTime = tempoEntry.Start * 1000,
-                        BPM = tempoEntry.BPM
+                        BPM = tempoEntry.BPM,
+                        MicroPerQuarter = (int)tempoEntry.MicroPerQuarter
                     };
                     
                     track.Add(new NAudio.Midi.TempoEvent(idxEntry.MicroPerQuarter, idxEntry.AbsoluteTime));
@@ -241,27 +243,6 @@ namespace Sharktooth.Xmk
             // Adds end track
             track.Add(new MetaEvent(MetaEventType.EndTrack, 0, track.Last().AbsoluteTime));
             return track;
-        }
-
-        long GetAbsoluteTime(double startTime, TempoIndex currentTempo)
-        {
-            double difference = startTime - currentTempo.RealTime;
-            long absoluteTicks = currentTempo.AbsoluteTime + (1000L * (long)difference * DELTA_TICKS_PER_QUARTER) / currentTempo.MicroPerQuarter;
-
-            // Applies quantization and snaps to grid
-            int q = DELTA_TICKS_PER_MEASURE / QUANTIZATION;
-            if (absoluteTicks % q != 0)
-            {
-                long before = absoluteTicks % q;
-                long after = q - before;
-
-                if (before < after)
-                    absoluteTicks -= before;
-                else
-                    absoluteTicks += after;
-            }
-
-            return absoluteTicks;
         }
 
         private long GetAbsoluteTime(double startTime)
