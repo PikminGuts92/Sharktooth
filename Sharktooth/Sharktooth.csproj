@@ -13,8 +13,4 @@
     <PackageReference Include="Crc32.NET" Version="1.2.0" />
     <PackageReference Include="NAudio" Version="1.9.0" />
   </ItemGroup>
-
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="xcopy &quot;$(SolutionDir)Libraries\*&quot; &quot;$(TargetDir)&quot; /s /d" />
-  </Target>
 </Project>
