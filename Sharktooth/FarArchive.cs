@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -15,6 +16,7 @@ namespace Sharktooth
 
         public FarArchive(string path)
         {
+            path = Path.GetFullPath(path); // Workaround for GameArchives parsing directory name
             _archivePath = path;
 
             try
