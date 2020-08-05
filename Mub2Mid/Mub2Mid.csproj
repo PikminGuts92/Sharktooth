@@ -7,8 +7,4 @@
   <ItemGroup>
     <ProjectReference Include="..\Sharktooth\Sharktooth.csproj" />
   </ItemGroup>
-
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="xcopy &quot;$(SolutionDir)Libraries\*&quot; &quot;$(TargetDir)&quot; /s /d" />
-  </Target>
 </Project>
