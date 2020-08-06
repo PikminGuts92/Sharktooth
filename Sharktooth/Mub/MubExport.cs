@@ -21,9 +21,7 @@ namespace Sharktooth.Mub
             MidiEventCollection mid = new MidiEventCollection(1, DELTA_TICKS_PER_QUARTER);
             mid.AddTrack(CreateTempoTrack());
             mid.AddTrack(CreateTrack());
-            List<MidiEvent> effectsTrack = CreateEffectsTrack();
-            if (effectsTrack != null)
-                mid.AddTrack(effectsTrack);
+            mid.AddTrack(CreateEffectsTrack());
 
             MidiFile.Export(path, mid);
         }
@@ -53,7 +51,6 @@ namespace Sharktooth.Mub
             float chartBPM = 0;
             int chartUsPerQuarterNote = 500000; // 120 BPM
 
-            // These are redundant but ehh
             track.Add(new NAudio.Midi.TextEvent("mubTempo", MetaEventType.SequenceTrackName, 0));
             track.Add(new TimeSignatureEvent(0, 4, 2, 24, 8)); // 4/4 ts
 
@@ -155,28 +152,50 @@ namespace Sharktooth.Mub
                         {
                             track.Add(new NAudio.Midi.TextEvent(entry.Text, MetaEventType.Copyright, 0));
                         }
-                        // 0xFFFFFFFF?
-                        else if ((entry.Modifier & 0xFF000000) == 0xFF000000)
-                        {
-                            // ignore
-                        }
-                        // Just a section
-                        else
+                        // section
+                        else if ((entry.Modifier & 0xFF000000) == 0x09000000)
                         {
                             track.Add(new NAudio.Midi.TextEvent(entry.Text, MetaEventType.TextEvent, start));
                         }
+                        // unknown
+                        else
+                        {
+                            track.Add(new NAudio.Midi.TextEvent($"UNK_{entry.Modifier:X}_{entry.Text}", MetaEventType.Marker, start));
+                        }
+                    }
+                    // 0xFFFFFFFF?
+                    else if ((entry.Modifier & 0xFF000000) == 0xFF000000)
+                    {
+                        // ignore
+                    }
+                    else
+                    {
+                        track.Add(new NAudio.Midi.TextEvent($"UNK_{entry.Modifier:X}", MetaEventType.Marker, start));
                     }
                     continue;
                 }
 
+                // Lyric Marker
+                if ((entry.Modifier & 0xFFFFFF00) == 0x1100)
+                {
+                    string lyricMarker;
+                    int markerMod = entry.Modifier & 0xFF;
+                    if (markerMod == 1)
+                        lyricMarker = "LYRIC_PAGE";
+                    else if (markerMod == 3 || markerMod == 4)
+                        lyricMarker = "LYRIC_COLOR";
+                    else
+                        lyricMarker = $"LYRIC_UNK_{markerMod}";
+                    track.Add(new NAudio.Midi.TextEvent(lyricMarker, MetaEventType.Marker, start));
+                }
+
                 if (entry.Length <= 0) continue;
 
-                if (!string.IsNullOrEmpty(entry.Text))
+                // Lyric
+                if ((entry.Modifier & 0xFFFFFF00) == 0x1000)
                 {
-                    if ((entry.Modifier & 0xFF00) == 0x1000)
-                        track.Add(new NAudio.Midi.TextEvent(entry.Text, MetaEventType.Lyric, start)); // Lyric event?
-                    else
-                        track.Add(new NAudio.Midi.TextEvent(entry.Text, MetaEventType.TextEvent, start));
+                    if (!string.IsNullOrEmpty(entry.Text))
+                        track.Add(new NAudio.Midi.TextEvent(entry.Text, MetaEventType.Lyric, start));
                 }
 
                 int noteMod = entry.Modifier & 0xFF;
@@ -210,7 +229,8 @@ namespace Sharktooth.Mub
 
         private List<MidiEvent> CreateEffectsTrack()
         {
-            List<MidiEvent> effects = null;
+            List<MidiEvent> effects = new List<MidiEvent>();
+            effects.Add(new NAudio.Midi.TextEvent("EFFECTS", MetaEventType.SequenceTrackName, 0));
 
             foreach (var entry in _mub.Entries)
             {
@@ -232,32 +252,24 @@ namespace Sharktooth.Mub
                         velocity = 1;
                     }
 
-                    if (effects == null)
-                    {
-                        effects = new List<MidiEvent>();
-                        effects.Add(new NAudio.Midi.TextEvent("EFFECTS", MetaEventType.SequenceTrackName, 0));
-                    }
                     effects.Add(new NoteEvent(start, 1, MidiCommandCode.NoteOn, effectMod, velocity));
                     effects.Add(new NoteEvent(end, 1, MidiCommandCode.NoteOff, effectMod, velocity));
                     continue;
                 }
             }
 
-            if (effects != null)
+            effects.Sort((x, y) =>
             {
-                effects.Sort((x, y) =>
-                {
-                    if (x.AbsoluteTime < y.AbsoluteTime)
-                        return -1;
-                    else if (x.AbsoluteTime > y.AbsoluteTime)
-                        return 1;
-                    else
-                        return 0;
-                });
+                if (x.AbsoluteTime < y.AbsoluteTime)
+                    return -1;
+                else if (x.AbsoluteTime > y.AbsoluteTime)
+                    return 1;
+                else
+                    return 0;
+            });
 
-                // Adds end track
-                effects.Add(new MetaEvent(MetaEventType.EndTrack, 0, effects.Last().AbsoluteTime));
-            }
+            // Adds end track
+            effects.Add(new MetaEvent(MetaEventType.EndTrack, 0, effects.Last().AbsoluteTime));
             return effects;
         }
     }
