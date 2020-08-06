@@ -22,9 +22,7 @@ namespace Sharktooth
             try
             {
                 AbstractPackage pkg = PackageReader.ReadPackageFromFile(path);
-
-                if (pkg is FSARPackage)
-                    _archive = pkg as FSARPackage;
+                _archive = pkg as FSARPackage;
             }
             catch (Exception ex)
             {
