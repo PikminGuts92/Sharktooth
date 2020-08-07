@@ -1,7 +1,7 @@
 BUILD_MODE="Release"
 BUILD_VERSION=${1:-"0.0.0.0"}
 OUTPUT_PATH="./BUILD"
-ZIP_PATH="$OUTPUT_PATH/Sharktooth-$BUILD_VERSION.zip"
+ZIP_PATH="$OUTPUT_PATH/Sharktooth_v$BUILD_VERSION.zip"
 
 # Clear previous build
 echo ">> Clearing old files"
