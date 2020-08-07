@@ -24,7 +24,7 @@ namespace Xmk2Mid
         [Option('o', "output", HelpText = "Path to output MIDI.", Required = true)]
         public string OutputPath { get; set; }
 
-        [Usage]
+        [Usage(ApplicationAlias = "Xmk2Mid.exe")]
         public static IEnumerable<Example> Examples
             => new []
             {
