@@ -19,6 +19,7 @@ namespace Xmk2Mid
                     try
                     {
                         parser.Parse(op);
+                        Console.WriteLine($"Wrote output to \"{op.OutputPath}\"");
                     }
                     catch (Exception ex)
                     {
