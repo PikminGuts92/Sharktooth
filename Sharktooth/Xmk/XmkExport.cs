@@ -11,7 +11,10 @@ namespace Sharktooth.Xmk
     {
         private const int DELTA_TICKS_PER_QUARTER = 480;
         private const int DELTA_TICKS_PER_MEASURE = DELTA_TICKS_PER_QUARTER * 4;
-        private const int QUANTIZATION = 384; // Should be 5 ticks of tolerance
+
+        private readonly int CALCULATED_QUANTIZATION;
+
+        private XmkExportOptions _exportOptions;
 
         private readonly List<TempoIndex> _tempoIdx = new List<TempoIndex>();
         private List<Xmk> _xmks;
@@ -21,18 +24,17 @@ namespace Sharktooth.Xmk
         private MidiMapping _guitarTouchMap = MidiMapping.CreateGuitar6();
         private MidiMapping _drumsMap = MidiMapping.CreateRBDrums();
 
-        public XmkExport(Xmk xmk)
-        {
-            _xmks = new List<Xmk>();
-            _xmks.Add(xmk);
-        }
+        public XmkExport(IList<Xmk> xmks) : this(xmks, XmkExportOptions.Default) { }
 
-        public XmkExport(List<Xmk> xmks)
+        public XmkExport(IList<Xmk> xmks, XmkExportOptions options)
         {
             _xmks = new List<Xmk>(xmks);
+            _exportOptions = options;
+
+            CALCULATED_QUANTIZATION = (int)(DELTA_TICKS_PER_MEASURE * options.Quantization);
         }
 
-        public void Export(string path, bool remap = false)
+        public void Export(string path)
         {
             MidiEventCollection mid = new MidiEventCollection(1, DELTA_TICKS_PER_QUARTER);
             _xmks.Sort((x, y) => GetSortNumber(x.Name) - GetSortNumber(y.Name));
@@ -59,7 +61,7 @@ namespace Sharktooth.Xmk
             Xmk firstXmk = _xmks.FirstOrDefault();
             mid.AddTrack(CreateTempoTrack(firstXmk.TempoEntries, firstXmk.TimeSignatureEntries));
 
-            if (!remap)
+            if (!_exportOptions.Remap)
             {
                 for (int i = 0; i < _xmks.Count; i++)
                     mid.AddTrack(CreateTrack(_xmks[i], i));
@@ -260,11 +262,10 @@ namespace Sharktooth.Xmk
             long absoluteTicks = currentTempo.AbsoluteTime + (1000L * (long)difference * DELTA_TICKS_PER_QUARTER) / currentTempo.MicroPerQuarter;
 
             // Applies quantization and snaps to grid
-            int q = DELTA_TICKS_PER_MEASURE / QUANTIZATION;
-            if (absoluteTicks % q != 0)
+            if (CALCULATED_QUANTIZATION > 0 && absoluteTicks % CALCULATED_QUANTIZATION != 0)
             {
-                long before = absoluteTicks % q;
-                long after = q - before;
+                long before = absoluteTicks % CALCULATED_QUANTIZATION;
+                long after = CALCULATED_QUANTIZATION - before;
 
                 if (before < after)
                     absoluteTicks -= before;
