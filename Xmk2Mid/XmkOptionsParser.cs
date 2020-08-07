@@ -62,14 +62,26 @@ namespace Xmk2Mid
 
         public virtual decimal ParseQuantization(string quan)
         {
+            decimal dec;
+
             if (IsFraction(quan))
             {
                 var frac = _fractionRegex.Match(quan);
-                return decimal.Parse(frac.Groups[1].Value) / decimal.Parse(frac.Groups[2].Value);
+                dec = decimal.Parse(frac.Groups[1].Value) / decimal.Parse(frac.Groups[2].Value);
             }
             else if (IsDecimal(quan))
             {
-                return decimal.Parse(quan);
+                dec = decimal.Parse(quan);
+            } else
+            {
+                throw new QuantizationInvalidException(quan);
+            }
+
+            // Validate range
+            // TODO: Is there a better way to do this?
+            if (dec >= 0.0M && dec <= 1.0M)
+            {
+                return dec;
             }
 
             throw new QuantizationInvalidException(quan);
