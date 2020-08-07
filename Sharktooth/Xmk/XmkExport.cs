@@ -21,7 +21,7 @@ namespace Sharktooth.Xmk
 
         // Midi pitch mappings
         private MidiMapping _guitarMap = MidiMapping.CreateGuitar3();
-        private MidiMapping _guitarTouchMap = MidiMapping.CreateGuitar6();
+        private MidiMapping _guitarTouchMap = MidiMapping.CreateGuitar5();
         private MidiMapping _drumsMap = MidiMapping.CreateRBDrums();
 
         public XmkExport(IList<Xmk> xmks) : this(xmks, XmkExportOptions.Default) { }
@@ -92,7 +92,7 @@ namespace Sharktooth.Xmk
                             continue;
                         case "touchguitar":
                             // PART GUITAR
-                            mid.AddTrack(ParseGuitar6(xmk));
+                            mid.AddTrack(ParseGuitar5(xmk));
                             continue;
                         case "vocals":
                             // PART VOCALS
@@ -415,7 +415,7 @@ namespace Sharktooth.Xmk
             return track;
         }
 
-        private List<MidiEvent> ParseGuitar6(Xmk xmk, bool guitar = true)
+        private List<MidiEvent> ParseGuitar5(Xmk xmk, bool guitar = true)
         {
             MidiMapping map = _guitarTouchMap;
             List<MidiEvent> track = new List<MidiEvent>();
@@ -463,7 +463,7 @@ namespace Sharktooth.Xmk
 
         private List<MidiEvent> ParseDrums(Xmk xmk)
         {
-            MidiMapping map = _guitarTouchMap;
+            MidiMapping map = _drumsMap;
             List<MidiEvent> track = new List<MidiEvent>();
             track.Add(new NAudio.Midi.TextEvent("PART DRUMS", MetaEventType.SequenceTrackName, 0));
 

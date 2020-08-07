@@ -74,7 +74,7 @@ namespace Sharktooth
             return mid;
         }
 
-        public static MidiMapping CreateGuitar6()
+        public static MidiMapping CreateGuitar5()
         {
             const int EXPERT = 50;
             const int HARD   = 38;
@@ -120,45 +120,46 @@ namespace Sharktooth
         public static MidiMapping CreateRBDrums()
         {
             const int EXPERT = 50;
-            const int HARD = 38; // Hard doesn't seem to be charted...
+            const int HARD =   38; // Hard doesn't seem to be charted...
             const int MEDIUM = 26;
-            const int EASY = 14;
+            const int EASY =   14;
 
             const int CH_STARPOWER = 116;
-            const int CH_EXPERT = 96;
-            const int CH_HARD = 84;
-            const int CH_MEDIUM = 72;
-            const int CH_EASY = 60;
+            const int CH_EXPERT     = 96;
+            const int CH_HARD       = 84;
+            const int CH_MEDIUM     = 72;
+            const int CH_EASY       = 60;
 
             MidiMapping mid = new MidiMapping();
 
             // Expert drums
-            mid._mappings.Add(EXPERT + 5, CH_STARPOWER); // SP
+            mid._mappings.Add(EXPERT + 5, CH_STARPOWER ); // SP
+            mid._mappings.Add(EXPERT + 1, CH_EXPERT + 4);
             mid._mappings.Add(EXPERT + 3, CH_EXPERT + 3);
             mid._mappings.Add(EXPERT + 2, CH_EXPERT + 2);
-            mid._mappings.Add(EXPERT + 1, CH_EXPERT + 1);
-            mid._mappings.Add(EXPERT, CH_EXPERT);
+            mid._mappings.Add(EXPERT    , CH_EXPERT + 1);
+            mid._mappings.Add(EXPERT + 4, CH_EXPERT    );
 
             // Hard drums
-            mid._mappings.Add(HARD + 4, CH_HARD + 4);
+            mid._mappings.Add(HARD + 1, CH_HARD + 4);
             mid._mappings.Add(HARD + 3, CH_HARD + 3);
             mid._mappings.Add(HARD + 2, CH_HARD + 2);
-            mid._mappings.Add(HARD + 1, CH_HARD + 1);
-            mid._mappings.Add(HARD, CH_HARD);
+            mid._mappings.Add(HARD    , CH_HARD + 1);
+            mid._mappings.Add(HARD + 4, CH_HARD    );
 
             // Medium drums
-            mid._mappings.Add(MEDIUM + 4, CH_MEDIUM + 4);
+            mid._mappings.Add(MEDIUM + 1, CH_MEDIUM + 4);
             mid._mappings.Add(MEDIUM + 3, CH_MEDIUM + 3);
             mid._mappings.Add(MEDIUM + 2, CH_MEDIUM + 2);
-            mid._mappings.Add(MEDIUM + 1, CH_MEDIUM + 1);
-            mid._mappings.Add(MEDIUM, CH_MEDIUM);
+            mid._mappings.Add(MEDIUM    , CH_MEDIUM + 1);
+            mid._mappings.Add(MEDIUM + 4, CH_MEDIUM    );
 
             // Easy drums
-            mid._mappings.Add(EASY + 4, CH_EASY + 4);
+            mid._mappings.Add(EASY + 1, CH_EASY + 4);
             mid._mappings.Add(EASY + 3, CH_EASY + 3);
             mid._mappings.Add(EASY + 2, CH_EASY + 2);
-            mid._mappings.Add(EASY + 1, CH_EASY + 1);
-            mid._mappings.Add(EASY, CH_EASY);
+            mid._mappings.Add(EASY    , CH_EASY + 1);
+            mid._mappings.Add(EASY + 4, CH_EASY    );
 
             return mid;
         }
