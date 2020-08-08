@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using NAudio.Midi;
 
@@ -23,6 +24,8 @@ namespace Sharktooth.Xmk
         private MidiMapping _guitarMap = MidiMapping.CreateGuitar3();
         private MidiMapping _guitarTouchMap = MidiMapping.CreateGuitar5();
         private MidiMapping _drumsMap = MidiMapping.CreateRBDrums();
+
+        private readonly Regex _voxRegex = new Regex(@"(?i)^(vocals)([\w\W]*)");
 
         public XmkExport(IList<Xmk> xmks) : this(xmks, XmkExportOptions.Default) { }
 
@@ -98,6 +101,13 @@ namespace Sharktooth.Xmk
                             // PART VOCALS
                             mid.AddTrack(ParseVocals(xmk));
                             continue;
+                    }
+
+                    // TODO: Refactor to be more elegant
+                    if (_voxRegex.IsMatch(trackName))
+                    {
+                        mid.AddTrack(ParseVocals(xmk));
+                        continue;
                     }
 
                     mid.AddTrack(CreateTrack(xmk, i));
@@ -513,8 +523,17 @@ namespace Sharktooth.Xmk
 
         private List<MidiEvent> ParseVocals(Xmk xmk)
         {
+            string nameApp = "";
+
+            // Gets name suffix
+            if (_voxRegex.IsMatch(xmk.Name))
+            {
+                var match = _voxRegex.Match(xmk.Name);
+                nameApp = Regex.Replace($"{match.Groups[2]}", @"[-]+", " ").ToUpper();
+            }
+
             List<MidiEvent> track = new List<MidiEvent>();
-            track.Add(new NAudio.Midi.TextEvent("PART VOCALS", MetaEventType.SequenceTrackName, 0));
+            track.Add(new NAudio.Midi.TextEvent($"PART VOCALS{nameApp}", MetaEventType.SequenceTrackName, 0));
 
             const int VOCALS_PHRASE = 105;
             //const int VOCALS_MAX_PITCH = 84;
@@ -528,7 +547,8 @@ namespace Sharktooth.Xmk
                 long end = GetAbsoluteTime(entry.End * 1000);
                 int velocity = 100;
                 
-                if (!string.IsNullOrEmpty(entry.Text) && entry.Unknown3 == 57)
+                if (!string.IsNullOrEmpty(entry.Text) && (entry.Unknown3 == 57
+                    || (xmk.Version == 5 && entry.Unknown3 == 16)))
                 {
                     // Lyric + pitch event
                     string text = entry.Text;
@@ -547,7 +567,8 @@ namespace Sharktooth.Xmk
                     track.Add(new NoteEvent(start, 1, MidiCommandCode.NoteOn, pitch, velocity));
                     track.Add(new NoteEvent(end, 1, MidiCommandCode.NoteOff, pitch, velocity));
                 }
-                else if (entry.Unknown3 == 1 && entry.Pitch == 129)
+                else if ((entry.Unknown3 == 1 && entry.Pitch == 129)
+                    || (xmk.Version == 5 && entry.Unknown3 == 17 && entry.Pitch == 20))
                 {
                     // Vocal phrase
                     if ((end - start) <= 0)

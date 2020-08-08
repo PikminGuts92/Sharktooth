@@ -71,34 +71,65 @@ namespace Sharktooth.Xmk
                 xmk.TimeSignatureEntries.Add(ts);
             }
 
+            var stringOffset = entryCount * xmk.GetEntrySize();
+
             // Reads in strings
             long startOffset = ar.BaseStream.Position;
-            ar.BaseStream.Seek(entryCount * 24, SeekOrigin.Current);
+            ar.BaseStream.Seek(stringOffset, SeekOrigin.Current);
             xmk.StringBlob = ar.ReadBytes(blobSize);
             Dictionary<long, string> words = ParseBlob(xmk.StringBlob);
             ar.BaseStream.Seek(startOffset, SeekOrigin.Begin);
 
             // Parses events
-            for (int i = 0; i < entryCount; i++)
+            if (xmk.Version == 5) // Sing Party
             {
-                XmkEvent entry = new XmkEvent()
+                for (int i = 0; i < entryCount; i++)
                 {
-                    Unknown1 = ar.ReadUInt32(),
-                    Unknown2 = ar.ReadUInt16(),
-                    Unknown3 = ar.ReadByte(),
-                    Pitch = ar.ReadByte(),
-                    Start = ar.ReadSingle(),
-                    End = ar.ReadSingle(),
-                    Unknown4 = ar.ReadUInt32()
-                };
+                    // 16 bytes
+                    XmkEvent entry = new XmkEvent()
+                    {
+                        Unknown1 = 0,
+                        Unknown2 = ar.ReadUInt16(),
+                        Unknown3 = ar.ReadByte(),
+                        Pitch = ar.ReadByte(),
+                        Start = ar.ReadSingle(),
+                        End = ar.ReadSingle(),
+                        Unknown4 = 0
+                    };
 
-                // Adds text
-                int offset = ar.ReadInt32() - (entryCount * 24);
-                if (offset >= 0 && words.ContainsKey(offset))
-                    entry.Text = words[offset];
+                    // Adds text
+                    int offset = ar.ReadInt32() - stringOffset;
+                    if (offset >= 0 && words.ContainsKey(offset))
+                        entry.Text = words[offset];
 
-                xmk.Entries.Add(entry);
+                    xmk.Entries.Add(entry);
+                }
             }
+            else // GHL
+            {
+                for (int i = 0; i < entryCount; i++)
+                {
+                    // 24 bytes
+                    XmkEvent entry = new XmkEvent()
+                    {
+                        Unknown1 = ar.ReadUInt32(),
+                        Unknown2 = ar.ReadUInt16(),
+                        Unknown3 = ar.ReadByte(),
+                        Pitch = ar.ReadByte(),
+                        Start = ar.ReadSingle(),
+                        End = ar.ReadSingle(),
+                        Unknown4 = ar.ReadUInt32()
+                    };
+
+                    // Adds text
+                    int offset = ar.ReadInt32() - stringOffset;
+                    if (offset >= 0 && words.ContainsKey(offset))
+                        entry.Text = words[offset];
+
+                    xmk.Entries.Add(entry);
+                }
+            }
+            
 
             return xmk;
         }
@@ -120,6 +151,11 @@ namespace Sharktooth.Xmk
 
             return words;
         }
+
+        private int GetEntrySize()
+            => Version == 5
+                ? 16  // Sing Party
+                : 24; // GHL
 
         public string Name => Path.GetFileNameWithoutExtension(_filePath);
         public int Version { get; set; }
