@@ -4,7 +4,7 @@ At the moment this is just a set of tools to convert song charts from FSG games.
 The latest build can be found on [AppVeyor](https://ci.appveyor.com/project/PikminGuts92/sharktooth/branch/master/artifacts).
 
 # System Requirements
-You will need a Windows machine with at least .NET Framework 4.6.1 installed (Linux with Mono installed may also work).
+You will need a Windows machine with at least .NET Framework 4.8 installed (Linux with Mono installed may also work).
 
 # Overview
 ## Mid2Mub
