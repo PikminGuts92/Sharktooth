@@ -603,7 +603,7 @@ namespace Sharktooth.Xmk
                 if (!(firstLyric is null) && (firstPhrase.AbsoluteTime - firstLyric.AbsoluteTime) > DELTA_TICKS_PER_QUARTER)
                 {
                     long start = firstLyric.AbsoluteTime;
-                    long end = firstPhrase.AbsoluteTime - (DELTA_TICKS_PER_QUARTER / 8); // End position is 1/32nd before other phrase start
+                    long end = firstPhrase.AbsoluteTime;
 
                     phraseEvents.Insert(0, new NoteEvent(start, DEFAULT_CHANNEL, MidiCommandCode.NoteOn, VOCALS_PHRASE, DEFAULT_VELOCITY));
                     phraseEvents.Insert(1, new NoteEvent(end, DEFAULT_CHANNEL, MidiCommandCode.NoteOff, VOCALS_PHRASE, DEFAULT_VELOCITY));
