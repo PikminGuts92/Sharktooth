@@ -537,16 +537,17 @@ namespace Sharktooth.Xmk
             track.Add(new NAudio.Midi.TextEvent($"PART VOCALS{nameApp}", MetaEventType.SequenceTrackName, 0));
 
             const int VOCALS_PHRASE = 105;
+            const int DEFAULT_VELOCITY = 100;
+            const int DEFAULT_CHANNEL = 1;
             //const int VOCALS_MAX_PITCH = 84;
             const int VOCALS_MIN_PITCH = 36;
-
+            
             var phraseEvents = new List<NoteEvent>();
 
             foreach (var entry in xmk.Entries)
             {
                 long start = GetAbsoluteTime(entry.Start * 1000);
                 long end = GetAbsoluteTime(entry.End * 1000);
-                int velocity = 100;
                 
                 if (!string.IsNullOrEmpty(entry.Text) && (entry.Unknown3 == 57
                     || (xmk.Version == 5 && entry.Unknown3 == 16)))
@@ -566,8 +567,8 @@ namespace Sharktooth.Xmk
                     }
 
                     track.Add(new NAudio.Midi.TextEvent(text, MetaEventType.Lyric, start));
-                    track.Add(new NoteEvent(start, 1, MidiCommandCode.NoteOn, pitch, velocity));
-                    track.Add(new NoteEvent(end, 1, MidiCommandCode.NoteOff, pitch, velocity));
+                    track.Add(new NoteEvent(start, DEFAULT_CHANNEL, MidiCommandCode.NoteOn, pitch, DEFAULT_VELOCITY));
+                    track.Add(new NoteEvent(end, DEFAULT_CHANNEL, MidiCommandCode.NoteOff, pitch, DEFAULT_VELOCITY));
                 }
                 else if ((entry.Unknown3 == 1 && entry.Pitch == 129)
                     || (xmk.Version == 5 && entry.Unknown3 == 17 && entry.Pitch == 20))
@@ -576,8 +577,8 @@ namespace Sharktooth.Xmk
                     if ((end - start) <= 0)
                         end = start + DELTA_TICKS_PER_QUARTER / 4; // 1/16 note
 
-                    phraseEvents.Add(new NoteEvent(start, 1, MidiCommandCode.NoteOn, VOCALS_PHRASE, velocity));
-                    phraseEvents.Add(new NoteEvent(end, 1, MidiCommandCode.NoteOff, VOCALS_PHRASE, velocity));
+                    phraseEvents.Add(new NoteEvent(start, DEFAULT_CHANNEL, MidiCommandCode.NoteOn, VOCALS_PHRASE, DEFAULT_VELOCITY));
+                    phraseEvents.Add(new NoteEvent(end, DEFAULT_CHANNEL, MidiCommandCode.NoteOff, VOCALS_PHRASE, DEFAULT_VELOCITY));
                 }
             }
 
@@ -591,6 +592,23 @@ namespace Sharktooth.Xmk
 
             if (phraseEvents.Count > 0)
             {
+                var firstPhrase = phraseEvents.First();
+
+                var firstLyric = track
+                    .Where(x => x is TextEvent && (x as TextEvent).MetaEventType == MetaEventType.Lyric)
+                    .OrderBy(x => x.AbsoluteTime)
+                    .FirstOrDefault();
+
+                // If first lyric is placed at least a quarter note before first phrase, then add additional phrase before to fill gap
+                if (!(firstLyric is null) && (firstPhrase.AbsoluteTime - firstLyric.AbsoluteTime) > DELTA_TICKS_PER_QUARTER)
+                {
+                    long start = firstLyric.AbsoluteTime;
+                    long end = firstPhrase.AbsoluteTime - (DELTA_TICKS_PER_QUARTER / 8); // End position is 1/32nd before other phrase start
+
+                    phraseEvents.Insert(0, new NoteEvent(start, DEFAULT_CHANNEL, MidiCommandCode.NoteOn, VOCALS_PHRASE, DEFAULT_VELOCITY));
+                    phraseEvents.Insert(1, new NoteEvent(end, DEFAULT_CHANNEL, MidiCommandCode.NoteOff, VOCALS_PHRASE, DEFAULT_VELOCITY));
+                }
+
                 // Extends first phrase
                 phraseEvents.First().AbsoluteTime = 0;
 
