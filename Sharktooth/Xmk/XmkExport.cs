@@ -62,7 +62,22 @@ namespace Sharktooth.Xmk
                 }
             }
 
-            Xmk firstXmk = _xmks.FirstOrDefault();
+            // Get xmk track to use for tempo map + generating BEAT track
+            // Note: Avoiding "touchdrums" because it was an under-developed feature so it may not consistently be as accurate compared to 6 fret
+            var tempoTrackPreference = new[] { "guitar_3x2", "touchguitar", "vocals", "control" };
+            Xmk firstXmk = _xmks
+                .Select(x =>
+                {
+                    var idx = Array.FindIndex(tempoTrackPreference, y => y == x.Name);
+                    if (idx == -1)
+                        idx = 100;
+
+                    return (Xmk: x, Order: idx);
+                })
+                .OrderBy(x => x.Order)
+                .Select(x => x.Xmk)
+                .First();
+
             mid.AddTrack(CreateTempoTrack(firstXmk.TempoEntries, firstXmk.TimeSignatureEntries));
 
             if (!_exportOptions.Remap)
