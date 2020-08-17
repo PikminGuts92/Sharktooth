@@ -26,6 +26,7 @@ namespace Sharktooth.Xmk
         private MidiMapping _drumsMap = MidiMapping.CreateRBDrums();
 
         private readonly Regex _voxRegex = new Regex(@"(?i)^(vocals)([\w\W]*)");
+        private readonly Regex _lyricSyllableConcat = new Regex(@"[-+]$"); // "-" is regular syllable concat, "+" is hyphenated concat (but FSG used them both interchangably for whatever reason)
 
         public XmkExport(IList<Xmk> xmks) : this(xmks, XmkExportOptions.Default) { }
 
@@ -554,9 +555,10 @@ namespace Sharktooth.Xmk
                     string text = entry.Text;
                     int pitch = entry.Pitch;
 
-                    text = text.Replace("=", string.Empty);
-                    text = text.Replace("@", "+");
+                    // Get RB lyric syntax
+                    text = FSGLyricToRB(text);
 
+                    // If pitch is out of range, make unpitched - Problem solved!
                     if (entry.Pitch < VOCALS_MIN_PITCH)
                     {
                         text = text + "#";
@@ -659,6 +661,25 @@ namespace Sharktooth.Xmk
             // Adds end track
             track.Add(new MetaEvent(MetaEventType.EndTrack, 0, track.Last().AbsoluteTime));
             return track;
+        }
+
+        private string FSGLyricToRB(string text)
+        {
+            // TODO: Update "=" replacement (I don't remember what "=" means so I'll just leave in for the refactor)
+            text = text.Replace("=", string.Empty);
+
+            if (text == "@")
+            {
+                // Syllable extension
+                return "+";
+            }
+            else if (_lyricSyllableConcat.IsMatch(text))
+            {
+                // Syllable concatenation
+                return _lyricSyllableConcat.Replace(text, "-");
+            }
+
+            return text;
         }
 
         private List<MidiEvent> ParseEvents(Xmk xmk)
