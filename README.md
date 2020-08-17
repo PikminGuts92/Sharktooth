@@ -18,7 +18,7 @@ CLI tool for converting `.fsgmub` charts to `.mid`. Primarily used for DJ Hero a
   - `Mub2Mid.exe song.fsgmub output.mid`
 
 ## Xmk2Mid
-CLI tool for converting `.xmk` charts and `.far` archives containing `.xmk` files to `.mid`. Primarily used for Guitar Hero Live.
+CLI tool for converting `.xmk` charts and `.far` archives containing `.xmk` files to `.mid`. Primarily used for Sing Party and Guitar Hero Live.
 - Usage:
   - `Xmk2Mid.exe GHL2517.far -o GHL2517.mid -r -q=1/32`
     - Note: Please use `--help` in tool for more details on command line options
