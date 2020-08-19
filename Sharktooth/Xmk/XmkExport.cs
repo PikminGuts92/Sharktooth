@@ -558,6 +558,7 @@ namespace Sharktooth.Xmk
             const int VOCALS_MIN_PITCH = 36;
             
             var phraseEvents = new List<NoteEvent>();
+            var notes = new List<(long Start, long End, string Lyric)>();
 
             foreach (var entry in xmk.Entries)
             {
@@ -584,6 +585,8 @@ namespace Sharktooth.Xmk
                     track.Add(new NAudio.Midi.TextEvent(text, MetaEventType.Lyric, start));
                     track.Add(new NoteEvent(start, DEFAULT_CHANNEL, MidiCommandCode.NoteOn, pitch, DEFAULT_VELOCITY));
                     track.Add(new NoteEvent(end, DEFAULT_CHANNEL, MidiCommandCode.NoteOff, pitch, DEFAULT_VELOCITY));
+
+                    notes.Add((start, end, text)); // Keep track of vox notes
                 }
                 else if ((entry.Unknown3 == 1 && entry.Pitch == 129)
                     || (xmk.Version == 5 && entry.Unknown3 == 17 && entry.Pitch == 20))
@@ -643,28 +646,26 @@ namespace Sharktooth.Xmk
                 NoteEvent start = phraseEvents[i];
                 NoteEvent end = phraseEvents[i + 1];
 
-                var betweenNotes = track.Where(x => x is NoteEvent
-                    && ((NoteEvent)x).NoteNumber != VOCALS_PHRASE
-                    && x.AbsoluteTime >= start.AbsoluteTime
-                    && x.AbsoluteTime <= end.AbsoluteTime).ToList();
+                var betweenNotes = notes
+                    .Where(x => x.Start >= start.AbsoluteTime
+                        && x.Start < end.AbsoluteTime)
+                    .OrderBy(x => x.Start) // Should already be sorted but you never know
+                    .ToList();
 
                 if (betweenNotes.Count <= 0)
                     continue; // No notes between phrases
 
-                var startEvent = betweenNotes
-                    .Where(x => ((NoteEvent)x).CommandCode == MidiCommandCode.NoteOn)
-                    .OrderBy(y => y.AbsoluteTime).FirstOrDefault();
+                var startNoteTime = betweenNotes
+                    .Select(x => x.Start)
+                    .First();
 
-                var endEvent = betweenNotes
-                    .Where(x => ((NoteEvent)x).CommandCode == MidiCommandCode.NoteOff)
-                    .OrderBy(y => y.AbsoluteTime).LastOrDefault();
-
-                if (startEvent == null || endEvent == null || startEvent.AbsoluteTime > endEvent.AbsoluteTime)
-                    continue; // No full notes between phrases
+                var endNoteTime = betweenNotes
+                    .Select(x => x.End)
+                    .Last();
 
                 // 1/128th note
-                start.AbsoluteTime = startEvent.AbsoluteTime - (DELTA_TICKS_PER_QUARTER / 32);
-                end.AbsoluteTime = endEvent.AbsoluteTime + (DELTA_TICKS_PER_QUARTER / 32);
+                start.AbsoluteTime = startNoteTime - (DELTA_TICKS_PER_QUARTER / 32);
+                end.AbsoluteTime = endNoteTime + (DELTA_TICKS_PER_QUARTER / 32);
 
                 track.Add(start);
                 track.Add(end);
