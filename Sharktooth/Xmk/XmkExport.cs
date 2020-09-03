@@ -702,7 +702,7 @@ namespace Sharktooth.Xmk
             // TODO: Update "=" replacement (I don't remember what "=" means so I'll just leave in for the refactor)
             text = text.Replace("=", string.Empty);
 
-            if (text == "@")
+            if (text.Contains("@")) // Game treats any lyric event containing '@' as extension
             {
                 // Syllable extension
                 return "+";
