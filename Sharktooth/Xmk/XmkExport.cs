@@ -143,8 +143,14 @@ namespace Sharktooth.Xmk
                 if (eventsIdx != -1 && firstPlay != null)
                 {
                     var events = mid[eventsIdx];
-                    var nextEvent = events.OrderBy(x => x.AbsoluteTime).First(y => y.AbsoluteTime > firstPlay.AbsoluteTime);
-                    var nextEventIdx = events.IndexOf(nextEvent);
+                    var nextEvent = events
+                        .OrderBy(y => y.AbsoluteTime)
+                        .FirstOrDefault(z => z.AbsoluteTime > firstPlay.AbsoluteTime);
+
+                    // If nextEvent is null, assume no text events exist
+                    var nextEventIdx = (nextEvent is null)
+                        ? 1
+                        : events.IndexOf(nextEvent);
 
                     events.Insert(nextEventIdx, new TextEvent("[music_start]", MetaEventType.TextEvent, firstPlay.AbsoluteTime));
                 }
